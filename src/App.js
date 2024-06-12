@@ -1,13 +1,18 @@
-import './App.css';
+import NavbarLogin from "./components/navbar/NavBarLogin";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Login from "./pages/Login";
 
 function App() {
-  return (
-  <>
-      <h1 className="text-3xl text-red-700 font-bold underline">
-          Hello world!
-      </h1>
-  </>
-  );
+    return (
+        <>
+            <Router>
+                <NavbarLogin />
+                <Routes>
+                    <Route path="*" element={<Login />} />
+                </Routes>
+            </Router>
+        </>
+    );
 }
 
 export default App;
