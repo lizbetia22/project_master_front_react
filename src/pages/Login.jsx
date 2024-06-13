@@ -4,7 +4,9 @@ import { AiFillExclamationCircle } from 'react-icons/ai';
 import { Navigate } from 'react-router-dom';
 import decodeToken from '../utils/decodeToken';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = "https://www.main-bvxea6i-r6scg3qxvlryi.fr-4.platformsh.site"
+
+console.log(API_URL)
 
 function Login({ onLogin }) {
     const [email, setEmail] = useState('');
