@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { IoHomeOutline } from "react-icons/io5";
-import { AiFillExclamationCircle } from "react-icons/ai";
+import { IoHomeOutline } from 'react-icons/io5';
+import { AiFillExclamationCircle } from 'react-icons/ai';
+import { Navigate } from 'react-router-dom';
+import decodeToken from '../utils/decodeToken';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-function Login() {
+function Login({ onLogin }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -12,22 +14,24 @@ function Login() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            console.log(`${API_URL}/user/login`);
-            console.log(email, password);
-
             const response = await fetch(`${API_URL}/user/login`, {
                 method: 'POST',
                 headers: {
-                    'Access-Control-Allow-Origin':'*',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ email, password })
             });
 
             if (response.ok) {
-                console.log('Login correctly');
                 const data = await response.json();
                 localStorage.setItem('token', data.token);
+
+                // Decode the token to get the role
+                const decodedToken = decodeToken(data.token);
+                if (decodedToken) {
+                    onLogin({ token: data.token, role: decodedToken.role });
+                }
+
             } else {
                 const errorMessage = await response.text();
                 setError(errorMessage || 'Login failed');
@@ -37,6 +41,15 @@ function Login() {
         }
     };
 
+    // If user is already logged in, redirect to appropriate page based on role
+    const token = localStorage.getItem('token');
+    if (token) {
+        const decodedToken = decodeToken(token);
+        if (decodedToken) {
+            return <Navigate to={`/${decodedToken.role.toLowerCase()}`} replace />;
+        }
+    }
+
     return (
         <div className="mt-28 max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
             <div className="mt-8 mb-8">
@@ -45,9 +58,7 @@ function Login() {
                         <h2 className="text-4xl font-bold">Login</h2>
                         <IoHomeOutline className="h-8 w-8" />
                     </div>
-                    <p className="text-gray-500 text-xl md:text-lg lg:text-base xl:text-lg">
-                        Atelier
-                    </p>
+                    <p className="text-gray-500 text-xl md:text-lg lg:text-base xl:text-lg">Atelier</p>
                 </div>
                 <div className="p-6 md:p-8">
                     <form className="space-y-4" onSubmit={handleSubmit}>
