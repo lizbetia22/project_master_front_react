@@ -12,8 +12,15 @@ function NavbarWorkShop({ onLogout }) {
     const [currentPage, setCurrentPage] = useState('pieces');
     const location = useLocation();
     const navigate = useNavigate();
+    const [userName, setUserName] = useState('');
 
     useEffect(() => {
+
+        const storedName = localStorage.getItem('name');
+        if (storedName) {
+            setUserName(storedName);
+        }
+
         const { pathname } = location;
         let page = pathname.split('/').pop();
         if (pathname === "/") {
@@ -36,12 +43,12 @@ function NavbarWorkShop({ onLogout }) {
                     </h1>
                     <div className="flex items-center gap-4">
                         <Link to="/pieces" className="flex items-center gap-2">
-                            <GoPackage className={`h-5 w-5 ${currentPage === 'pieces'|| currentPage === 'form-piece' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'pieces'|| currentPage === 'form-piece' ? 'text-blue-600' : ''}`}>Gestion des pièces</span>
+                            <GoPackage className={`h-5 w-5 ${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Gestion des pièces</span>
                         </Link>
                         <Link to="/gammes" className="flex items-center gap-2">
-                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'form-gammes' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'form-gammes' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
+                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
                         </Link>
                         <Link to="/posts" className="flex items-center gap-2">
                             <FiBriefcase className={`h-5 w-5 ${currentPage === 'posts' ? 'text-blue-600' : ''}`} />
@@ -54,7 +61,7 @@ function NavbarWorkShop({ onLogout }) {
 
                         <div className="flex items-center gap-2">
                             <CgProfile className="h-6 w-6" />
-                            <span>John Doe</span>
+                            <span>{userName || 'User'}</span>
                         </div>
                         <div>
                             <Link to="/login" onClick={handleLogout} className="cursor-pointer">

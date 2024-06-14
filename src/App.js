@@ -9,6 +9,9 @@ import Admin from './pages/admin/Accounts';
 import Devis from './pages/commerce/Devis';
 import Pieces from './pages/workshop/Piece';
 import decodeToken from './utils/decodeToken';
+import PieceCreate from "./components/forms/PieceCreate";
+import Gamme from "./pages/workshop/Gamme";
+import GammeCreate from "./components/forms/GammeCreate";
 
 function App() {
     const [role, setRole] = useState(null);
@@ -31,6 +34,7 @@ function App() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('name');
         setRole(null);
     };
 
@@ -52,6 +56,9 @@ function App() {
                     {role === null && <Route path="*" element={<Navigate to="/login" replace />} />}
 
                     {role === 'Workshop' && <Route path="/pieces" element={<Pieces />} />}
+                    {role === 'Workshop' && <Route path="/piece-create" element={<PieceCreate/>} />}
+                    {role === 'Workshop' && <Route path="/gammes" element={<Gamme />} />}
+                    {role === 'Workshop' && <Route path="/gamme-create" element={<GammeCreate />} />}
                     {role === 'Commercial' && <Route path="/devis" element={<Devis />} />}
                     {role === 'Admin' && <Route path="/admin" element={<Admin />} />}
 

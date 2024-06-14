@@ -7,7 +7,7 @@ const DropdownFilterPieces = ({ onOptionSelect }) => {
     const [selectedOption, setSelectedOption] = useState("Tous les types"); // Modifier la valeur initiale
 
     const options = [
-        'Tous les types', 'matière première', 'pièces livrables aux clients', 'pièce achetée', 'pièce intermédiaire'
+        'Tous les types', 'Matière première', 'Pièces livrables aux clients', 'Pièce achetée', 'Pièce intermédiaire'
     ];
 
     const toggleDropdown = () => {

@@ -6,8 +6,6 @@ import decodeToken from '../utils/decodeToken';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-console.log(API_URL)
-
 function Login({ onLogin }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -28,10 +26,10 @@ function Login({ onLogin }) {
                 const data = await response.json();
                 localStorage.setItem('token', data.token);
 
-                // Decode the token to get the role
                 const decodedToken = decodeToken(data.token);
                 if (decodedToken) {
-                    onLogin({ token: data.token, role: decodedToken.role });
+                    onLogin({ token: data.token, role: decodedToken.role, name:decodedToken.name });
+                    localStorage.setItem('name', decodedToken.name);
                 }
 
             } else {
