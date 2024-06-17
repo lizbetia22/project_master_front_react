@@ -173,7 +173,8 @@ function Pieces() {
             <PieceDetailModal
                 showModal={showModal}
                 setShowModal={setShowModal}
-                selectedPieceId={selectedPieceId}/>
+                selectedPieceId={selectedPieceId}
+            />
             <DeleteConfirmationModal
                 showModal={deleteModal}
                 setShowModal={setDeleteModal}

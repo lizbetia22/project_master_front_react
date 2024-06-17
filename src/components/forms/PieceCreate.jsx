@@ -3,14 +3,24 @@ import { Link } from "react-router-dom";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaTools } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
+import axios from "axios";
+
 function PieceCreate() {
     const [name, setName] = useState('');
     const [type, setType] = useState('');
     const [price, setPrice] = useState('');
+    const [allPieces, setAllPieces] = useState([]);
     const [components, setComponents] = useState([{ id: 1, component: '', quantity: '' }]);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState('');
+    const options = [
+        'Tous les types', 'Matière première', 'Pièces livrables aux clients', 'Pièce achetée', 'Pièce intermédiaire'
+    ];
+    const API_URL = process.env.REACT_APP_API_URL;
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        handleCreate();
     };
 
     const handleAddComponent = () => {
@@ -27,6 +37,50 @@ function PieceCreate() {
         newComponents[index][field] = value;
         setComponents(newComponents);
     };
+
+    const handleCreate = async () => {
+        const piece = { name, type, price: parseFloat(price) };
+        const componentsData = components
+            .filter(comp => comp.component && comp.quantity)
+            .map(comp => ({
+                id_piece_component: parseInt(comp.component, 10),
+                quantity: parseInt(comp.quantity, 10)
+            }));
+
+        const requestBody = { piece, components: componentsData };
+
+        try {
+            await axios.post(`${API_URL}/piece/create/ref`, requestBody);
+            setAlertMessage("Pièce créée avec succès !");
+            setAlertType("success");
+            setName('');
+            setType('');
+            setPrice('');
+            setComponents([{ id: 1, component: '', quantity: '' }]);
+        } catch (error) {
+            console.error("Erreur lors de la création de la pièce:", error);
+            setAlertMessage("Une erreur est survenue lors de la création de la pièce.");
+            setAlertType("error");
+        }
+        // Set timeout to clear alert after 5 seconds
+        setTimeout(() => {
+            setAlertMessage('');
+            setAlertType('');
+        }, 5000);
+    }
+
+    const fetchAllPieces = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/piece/all`);
+            setAllPieces(response.data);
+        } catch (error) {
+            console.error("Error fetching all pieces:", error);
+        }
+    };
+
+    useState(() => {
+        fetchAllPieces();
+    }, []);
 
     return (
         <>
@@ -51,6 +105,11 @@ function PieceCreate() {
                             Remplissez le formulaire ci-dessous pour ajouter une nouvelle pièce
                         </h1>
                     </div>
+                    {alertMessage && (
+                        <div className={`p-4 mb-4 text-sm rounded-lg ${alertType === 'success' ? 'text-green-800 bg-green-50 dark:bg-gray-800 dark:text-green-400' : 'text-red-800 bg-red-50 dark:bg-gray-800 dark:text-red-400'}`} role="alert">
+                            <span className="font-medium">{alertType === 'success' ? '' : ''}</span> {alertMessage}
+                        </div>
+                    )}
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -76,9 +135,11 @@ function PieceCreate() {
                                     className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                 >
                                     <option value="">Sélectionnez un type</option>
-                                    <option value="electronique">Électronique</option>
-                                    <option value="mecanique">Mécanique</option>
-                                    <option value="autre">Autre</option>
+                                    {options.map((option, index) => (
+                                        <option key={index} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -107,11 +168,11 @@ function PieceCreate() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez un composant</option>
-                                        <option value="resistor">Résistance</option>
-                                        <option value="capacitor">Condensateur</option>
-                                        <option value="transistor">Transistor</option>
-                                        <option value="diode">Diode</option>
-                                        <option value="microcontroller">Microcontrôleur</option>
+                                        {allPieces.map(piece => (
+                                            <option key={piece.id} value={piece.id}>
+                                                {piece.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <input
                                         value={comp.quantity}

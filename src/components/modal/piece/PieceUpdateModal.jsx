@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { MdDeleteForever } from "react-icons/md";
 
 const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
     const [name, setName] = useState("");
     const [type, setType] = useState("");
     const [price, setPrice] = useState("");
+    const [composants, setComposants] = useState([]);
+    const [showAddComponent, setShowAddComponent] = useState(false);
+    const [componentId, setComponentId] = useState(null);
+    const [componentName, setComponentName] = useState("");
+    const [componentQuantity, setComponentQuantity] = useState("");
+    const [allPieces, setAllPieces] = useState([]);
+
 
     useEffect(() => {
-        // Fetch piece details when modal is opened
         const fetchPieceDetails = async () => {
             try {
                 const response = await axios.get(`${API_URL}/piece/${pieceId}`);
@@ -20,25 +27,89 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
             }
         };
 
+        const fetchComponents = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/piece_ref/components/${pieceId}`);
+                setComposants(response.data);
+            } catch (error) {
+                console.error("Error fetching components:", error);
+            }
+        };
+
+        const fetchAllPieces = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/piece/all`);
+                setAllPieces(response.data);
+            } catch (error) {
+                console.error("Error fetching all pieces:", error);
+            }
+        };
+
         if (showModal && pieceId) {
             fetchPieceDetails();
+            fetchComponents();
+            fetchAllPieces();
         }
     }, [showModal, pieceId, API_URL]);
 
     const handleUpdatePiece = async () => {
         try {
-            await axios.put(`${API_URL}/piece/update/${pieceId}`, { name, type, price });
+            const requestBody = {
+                piece: {
+                    name: name,
+                    type: type,
+                    price: parseFloat(price)
+                },
+                components: composants.map(composant => ({
+                    id_piece_component: composant.ComponentPiece.id,
+                    quantity: composant.quantity
+                }))
+            };
+            await axios.put(`${API_URL}/piece/update/ref/${pieceId}`, requestBody);
             setShowModal(false);
         } catch (error) {
             console.error("Error updating piece:", error);
         }
     };
 
+
+
+    const handleComponentChange = (index, field, value) => {
+        const newComposants = [...composants];
+        newComposants[index][field] = value;
+        setComposants(newComposants);
+    };
+
+    const handleAddComponent = () => {
+        setShowAddComponent(true);
+    };
+
+    const handleCancelAddComponent = () => {
+        setShowAddComponent(false);
+        setComponentId(null);
+        setComponentName("");
+        setComponentQuantity("");
+    };
+
+    const handleSaveComponent = () => {
+        const newComponent = {name: componentName, quantity: componentQuantity, ComponentPiece: {id: componentId, name: componentName}};
+        setComposants([...composants, newComponent]);
+        setShowAddComponent(false);
+        setComponentId(null);
+        setComponentName("");
+        setComponentQuantity("");
+    };
+
+    const handleRemoveComponent = (index) => {
+        const newComposants = composants.filter((_, i) => i !== index);
+        setComposants(newComposants);
+    };
+
     return (
         <>
             {showModal && (
                 <div className="fixed z-10 inset-0 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center block sm:p-0">
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                         <div className="fixed inset-0 transition-opacity" aria-hidden="true">
                             <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
                         </div>
@@ -88,6 +159,131 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
+                                        <div className="mt-4">
+                                            <h4 className="text-lg font-medium text-gray-900">Composants</h4>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {composants.length === 0 && !showAddComponent && (
+                                                    <div>
+                                                        <p>Aucun composant trouvé</p>
+                                                        <button
+                                                            onClick={handleAddComponent}
+                                                            className="mt-3 w-full inline-flex justify-center bg-gray-800 rounded-md border border-gray-300 shadow-sm px-4 py-2  text-base font-medium text-gray-100 hover:bg-gray-700 sm:w-auto sm:text-sm"
+                                                        >
+                                                            Ajouter
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {showAddComponent && (
+                                                    <div className="flex flex-wrap items-center">
+                                                        <div className="mb-4 w-full">
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                <div className="md:col-span-2">
+                                                                    <label className="block text-sm font-medium text-gray-700 mt-2">
+                                                                        Nom du composant
+                                                                    </label>
+                                                                    <select
+                                                                        value={componentName}
+                                                                        onChange={(e) => {
+                                                                            const selectedPieceId = e.target.options[e.target.selectedIndex].getAttribute("data-piece-id");
+                                                                            setComponentId(selectedPieceId);
+                                                                            setComponentName(e.target.value);
+                                                                        }}
+                                                                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                                                    >
+                                                                        <option value="">Sélectionner un composant</option>
+                                                                        {allPieces.map((piece) => (
+                                                                            <option key={piece.id} value={piece.name} data-piece-id={piece.id}>{piece.name}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-sm font-medium text-gray-700 mt-2">
+                                                                        Quantité
+                                                                    </label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={componentQuantity}
+                                                                        onChange={(e) => setComponentQuantity(e.target.value)}
+                                                                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                                                        placeholder="Quantité"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-between mt-3">
+                                                                <button
+                                                                    onClick={handleSaveComponent}
+                                                                    className="w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-gray-800 text-base font-medium text-gray-100 hover:bg-gray-700 sm:text-sm"
+                                                                >
+                                                                    Enregistrer
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleCancelAddComponent}
+                                                                    className="w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:text-sm"
+                                                                >
+                                                                    Annuler
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {composants.map((composant, index) => (
+                                                    <div key={index} className="flex space-x-4 items-center mt-2">
+                                                        <div className="w-2/3">
+                                                            <label className="block text-sm font-medium text-gray-700">
+                                                                Nom du composant
+                                                            </label>
+                                                            <select
+                                                                value={composant.ComponentPiece.name}
+                                                                onChange={(e) =>
+                                                                    handleComponentChange(index, 'name', e.target.value)
+                                                                }
+                                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                                            >
+                                                                {allPieces.map((piece) => (
+                                                                    <option key={piece.id} value={piece.name}>
+                                                                        {piece.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div className="w-1/3">
+                                                            <label className="block text-sm font-medium text-gray-700">
+                                                                Quantité
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={composant.quantity}
+                                                                onChange={(e) =>
+                                                                    handleComponentChange(index, 'quantity', e.target.value)
+                                                                }
+                                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-6"
+                                                            onClick={() => handleRemoveComponent(index)}
+                                                        >
+                                                            <MdDeleteForever className="h-5 w-5"/>
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                                {composants.length > 0 && (
+                                                    <div className="flex items-center gap-4 mt-4">
+                                                        <button
+                                                            className="w-auto inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"
+                                                            onClick={handleAddComponent}
+                                                            type="button"
+                                                        >
+                                                            Ajouter un composant
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -95,14 +291,14 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                                 <button
                                     onClick={handleUpdatePiece}
                                     type="button"
-                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-800 text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                                    className="mt-3 w-full inline-flex justify-center bg-gray-800 rounded-md border border-gray-300 shadow-sm px-4 py-2  text-base font-medium text-gray-100 hover:bg-gray-700 sm:w-auto sm:text-sm ml-5"
                                 >
                                     Modifier
                                 </button>
                                 <button
                                     onClick={() => setShowModal(false)}
                                     type="button"
-                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:w-auto sm:text-sm"
                                 >
                                     Annuler
                                 </button>

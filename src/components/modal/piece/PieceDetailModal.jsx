@@ -18,7 +18,7 @@ function PieceDetailModal({ showModal, setShowModal, selectedPieceId }) {
         if (selectedPieceId) {
             fetchPieces();
         }
-    }, [selectedPieceId, API_URL]);
+    }, [selectedPieceId, API_URL, showModal]);
 
     if (!showModal) {
         return null;
@@ -53,7 +53,7 @@ function PieceDetailModal({ showModal, setShowModal, selectedPieceId }) {
                                             composants.map((composant, index) => (
                                                 <div key={index}>
                                                     <p className="text-gray-800">
-                                                        <span className="font-bold">{composant.Piece.name}:</span> {composant.quantity} pièces
+                                                        <span className="font-bold">{composant.ComponentPiece.name}:</span> {composant.quantity} pièces
                                                     </p>
                                                 </div>
                                             ))
