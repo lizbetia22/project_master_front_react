@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LuCalendarRange } from 'react-icons/lu';
 import { VscSymbolProperty } from "react-icons/vsc";
 import { Link } from "react-router-dom";
@@ -14,7 +14,7 @@ function Gamme() {
 
     const API_URL = process.env.REACT_APP_API_URL;
 
-    useEffect(() => {
+    useState(() => {
         axios.get(`${API_URL}/gamme/all`)
             .then(response => {
                 setGammesData(response.data);
@@ -74,7 +74,7 @@ function Gamme() {
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-medium">{gamme.name}</h3>
                                     <div className="relative inline-block">
-                                        <Link to="/produce">
+                                        <Link to="/gamme-production">
                                             <VscSymbolProperty
                                                 className="h-6 w-6 cursor-pointer"
                                                 onMouseEnter={() => setShowTooltip(index)}

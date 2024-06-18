@@ -47,8 +47,8 @@ function NavbarWorkShop({ onLogout }) {
                             <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Gestion des pièces</span>
                         </Link>
                         <Link to="/gammes" className="flex items-center gap-2">
-                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'gammes' || currentPage === 'produce' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
+                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
                         </Link>
                         <Link to="/posts" className="flex items-center gap-2">
                             <FiBriefcase className={`h-5 w-5 ${currentPage === 'posts' ? 'text-blue-600' : ''}`} />

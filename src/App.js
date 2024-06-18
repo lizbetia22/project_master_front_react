@@ -12,10 +12,12 @@ import decodeToken from './utils/decodeToken';
 import PieceCreate from "./components/forms/PieceCreate";
 import Gamme from "./pages/workshop/Gamme";
 import GammeCreate from "./components/forms/GammeCreate";
+import Posts from "./pages/workshop/Posts";
+import History from "./pages/workshop/History";
+import GammeProduction from "./pages/workshop/GammeProduction";
 
 function App() {
     const [role, setRole] = useState(null);
-
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -59,6 +61,9 @@ function App() {
                     {role === 'Workshop' && <Route path="/piece-create" element={<PieceCreate/>} />}
                     {role === 'Workshop' && <Route path="/gammes" element={<Gamme />} />}
                     {role === 'Workshop' && <Route path="/gamme-create" element={<GammeCreate />} />}
+                    {role === 'Workshop' && <Route path="/posts" element={<Posts />} />}
+                    {role === 'Workshop' && <Route path="/history" element={<History />} />}
+                    {role === 'Workshop' && <Route path="/gamme-production" element={<GammeProduction />} />}
                     {role === 'Commercial' && <Route path="/devis" element={<Devis />} />}
                     {role === 'Admin' && <Route path="/admin" element={<Admin />} />}
 
