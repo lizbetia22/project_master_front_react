@@ -11,6 +11,8 @@ function Gamme() {
     const [gammesData, setGammesData] = useState([]);
     const gammesPerPage = 8;
     const [showTooltip, setShowTooltip] = useState(null);
+    const [modalGammeId, setModalGammeId] = useState(null);
+    const [operationsData, setOperationsData] = useState([]);
 
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -23,6 +25,18 @@ function Gamme() {
                 console.error("There was an error fetching the gammes data!", error);
             });
     }, [API_URL]);
+
+    const fetchOperationsData = (gammeId) => {
+        axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`)
+            .then(response => {
+                setOperationsData(response.data);
+                console.log(response.data)
+                setShowModal(true);
+            })
+            .catch(error => {
+                console.error("Error fetching operations data for gamme:", error);
+            });
+    };
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -37,6 +51,11 @@ function Gamme() {
     const currentGammes = filteredGammes.slice(indexOfFirstGamme, indexOfLastGamme);
 
     const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+    const handleShowModal = (id) => {
+        setModalGammeId(id);
+        fetchOperationsData(id); // Fetch operations data when modal is opened
+    };
 
     return (
         <>
@@ -88,14 +107,13 @@ function Gamme() {
                                         )}
                                     </div>
                                 </div>
-                                <p className="text-gray-500 dark:text-gray-400">Responsable: {gamme.User.name}</p>
-                                <p className="text-gray-500 dark:text-gray-400">Pièce: {gamme.Piece.name}</p>
-                                <p className="text-xl font-bold">Opérations: 1</p>
+                                <p className="text-gray-600">Responsable: {gamme.User.name}</p>
+                                <p className="text-gray-600">Pièce: {gamme.Piece.name}</p>
                                 <div className="mt-4 flex gap-2">
                                     <div className="flex justify-between mt-2">
                                         <button
                                             className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow flex-grow mr-2"
-                                            onClick={() => setShowModal(true)}
+                                            onClick={() => handleShowModal(gamme.id)}
                                         >
                                             Détails
                                         </button>
@@ -147,29 +165,30 @@ function Gamme() {
                             <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
                         </div>
                         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
                             <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                 <div className="sm:flex sm:items-start">
-                                    <div className="mt-3 text-center sm:mt-0 sm:text-left">
+                                    <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
                                         <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-headline">
-                                            Détails de la gamme de fabrication C
+                                            Détails de la gamme de fabrication avec id: {modalGammeId}
                                         </h3>
-                                        <div className="mt-2">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-gray-200">
-                                                    <h4 className="text-lg font-medium">Opération 1</h4>
-                                                    <p className="text-gray-700 dark:text-gray-600">Nom: Découpe du média filtrant</p>
-                                                    <p className="text-gray-700 dark:text-gray-600">Poste: Découpe</p>
-                                                    <p className="text-gray-700 dark:text-gray-600">Machine: Cisaille</p>
-                                                    <p className="text-gray-700 dark:text-gray-600">Temps: 15 min</p>
-                                                </div>
-                                                <div className="bg-gray-200">
-                                                    <h4 className="text-lg font-medium">Opération 2</h4>
-                                                    <p className="text-gray-700 dark:text-gray-600">Nom: Pliage du boîtier</p>
-                                                    <p className="text-gray-700 dark:text-gray-600">Poste: Pliage</p>
-                                                </div>
+                                        {operationsData.length === 0 ? (
+                                            <p className="text-gray-700 dark:text-gray-600 mt-4">
+                                                Gamme n'a pas encore d'opérations enregistrées.
+                                            </p>
+                                        ) : (
+                                            <div className="flex flex-wrap">
+                                                {operationsData.map((operation, index) => (
+                                                    <div key={operation.id} className="w-full sm:w-1/2 lg:w-1/3 border rounded-lg p-3 m-2">
+                                                        <h4 className="text-lg font-medium">Opération {index + 1}</h4>
+                                                        <p className="text-gray-700 dark:text-gray-600">Nom: {operation.operation_name}</p>
+                                                        <p className="text-gray-700 dark:text-gray-600">Poste: {operation.post_name}</p>
+                                                        <p className="text-gray-700 dark:text-gray-600">Machine: {operation.machine_name}</p>
+                                                        <p className="text-gray-700 dark:text-gray-600">Temps: {operation.time} min</p>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -186,6 +205,7 @@ function Gamme() {
                     </div>
                 </div>
             )}
+
         </>
     );
 }

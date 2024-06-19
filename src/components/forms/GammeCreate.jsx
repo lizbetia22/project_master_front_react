@@ -3,16 +3,44 @@ import { Link } from "react-router-dom";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
 import {LuCalendarRange} from "react-icons/lu";
+import { IoMdSave } from "react-icons/io";
+import axios from "axios";
 function GammeCreate() {
     const [name, setName] = useState('');
     const [piece, setPiece] = useState('');
+    const [pieces, setPieces] = useState([]);
+    const [posts, setPosts] = useState([]);
+    const [machine, setMachines] = useState([]);
+    const [operation, setOperation] = useState([]);
     const [responsable, setResponsable] = useState('');
     const [components, setComponents] = useState([{ id: 1, name: '', post: '', machine: '', time: '' }]);
     const [operations, setOperations] = useState([{ id: 1, operation:'' }]);
+    const API_URL = process.env.REACT_APP_API_URL;
+
+    useState(() => {
+        const fetchData = async () => {
+            try {
+                const responsePieces = await axios.get(`${API_URL}/piece/all`);
+                setPieces(responsePieces.data);
+
+                const responsePosts = await axios.get(`${API_URL}/post/all`);
+                setPosts(responsePosts.data);
+
+                const responseMachines = await axios.get(`${API_URL}/machine/all`);
+                setMachines(responseMachines.data);
+
+                const responseOperations = await axios.get(`${API_URL}/operation/all`);
+                setOperation(responseOperations.data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+        fetchData();
+    }, []);
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Logique de soumission du formulaire
     };
 
     const handleAddComponent = () => {
@@ -92,10 +120,12 @@ function GammeCreate() {
                                     onChange={(e) => setPiece(e.target.value)}
                                     className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                 >
-                                    <option value="">Sélectionnez une piéce</option>
-                                    <option value="electronique">Table</option>
-                                    <option value="mecanique">Chase</option>
-                                    <option value="autre">Ping Pong</option>
+                                    <option value="">Sélectionnez une pièce</option>
+                                    {pieces.map((pieceObj) => (
+                                        <option key={pieceObj.id} value={pieceObj.name}>
+                                            {pieceObj.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -131,11 +161,11 @@ function GammeCreate() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez un post</option>
-                                        <option value="resistor">Post 1</option>
-                                        <option value="capacitor">Post 2</option>
-                                        <option value="transistor">Post 3</option>
-                                        <option value="diode">Post 4</option>
-                                        <option value="microcontroller">Post 5</option>
+                                        {posts.map((post) => (
+                                            <option key={post.id} value={post.name}>
+                                                {post.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <input
                                         value={comp.time}
@@ -150,13 +180,19 @@ function GammeCreate() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez une machine</option>
-                                        <option value="resistor">Machine 1</option>
-                                        <option value="capacitor">Machine 2</option>
-                                        <option value="transistor">Machine 3</option>
-                                        <option value="diode">Machine 4</option>
-                                        <option value="microcontroller">Machine 5</option>
+                                        {machine.map((machineObj) => (
+                                            <option key={machineObj.id} value={machineObj.name}>
+                                                {machineObj.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 mr-2"
+                                >
+                                    <IoMdSave className="h-6 w-6"/>
+                                </button>
                                 <button
                                     type="button"
                                     className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
@@ -169,7 +205,7 @@ function GammeCreate() {
                         {operations.map((comp, index) => (
                             <div key={comp.id} className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">
-                                    Opération exsitante{index + 1}
+                                    Opération exsitante {index + 1}
                                 </label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <select
@@ -178,11 +214,11 @@ function GammeCreate() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez une opération</option>
-                                        <option value="resistor">Opération 1</option>
-                                        <option value="capacitor">Opération 2</option>
-                                        <option value="transistor">Opération 3</option>
-                                        <option value="diode">Opération 4</option>
-                                        <option value="microcontroller">Opération 5</option>
+                                        {operation.map((operationObj) => (
+                                            <option key={operationObj.id} value={operationObj.name}>
+                                                {operationObj.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <button

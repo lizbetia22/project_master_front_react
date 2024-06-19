@@ -8,66 +8,24 @@ const Posts = () => {
     const postsPerPage = 4;
     const API_URL = process.env.REACT_APP_API_URL;
 
-    const fetchData = async () => {
-        try {
-            const [userPostsResponse, gammeResponse] = await Promise.all([
-                axios.get(`${API_URL}/user-post/all`),
-                axios.get(`${API_URL}/gamme/all`),
-            ]);
-
-            const userPosts = userPostsResponse.data;
-            const gammes = gammeResponse.data;
-
-            const userMap = new Map();
-
-            userPosts.forEach(post => {
-                const userName = post.User.name;
-                const roleObject = gammes.find(gamme => gamme.User.name === userName)?.User.Role;
-
-                if (roleObject) {
-                    const role = roleObject.name;
-                    const competence = post.Post.name;
-
-                    if (userMap.has(userName)) {
-                        const user = userMap.get(userName);
-                        if (!user.competences.includes(competence)) {
-                            user.competences.push(competence);
-                        }
-                    } else {
-                        userMap.set(userName, {
-                            post: role,
-                            nom: userName,
-                            competences: [competence],
-                            responsabilites: [],
-                        });
-                    }
-                }
-            });
-
-            gammes.forEach(gamme => {
-                const userName = gamme.User.name;
-                if (userMap.has(userName)) {
-                    const user = userMap.get(userName);
-                    user.responsabilites.push(gamme.name);
-                }
-            });
-
-            const mappedPosts = Array.from(userMap.values());
-
-            setPosts(mappedPosts);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-
     useState(() => {
-        fetchData();
-    }, []);
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user-post/posts/gammes`);
+                setPosts(response.data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
 
+        fetchData();
+    }, [API_URL]);
+
+    // Calculate pagination
     const indexOfLastPost = currentPage * postsPerPage;
     const indexOfFirstPost = indexOfLastPost - postsPerPage;
     const currentPosts = posts
-        .filter(post => post.nom.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(post => post.userName.toLowerCase().includes(searchTerm.toLowerCase()))
         .slice(indexOfFirstPost, indexOfLastPost);
 
     const handleSearch = event => {
@@ -90,45 +48,49 @@ const Posts = () => {
                     onChange={handleSearch}
                 />
             </div>
-            <div className="container mx-auto mt-10 ">
-                {posts.length === 0 ? (
-                    <p className="text-center text-gray-600">Chargement en cours...</p>
-                ) : (
-                    <div className="bg-white rounded-lg shadow-md overflow-hidden ml-8 mr-8">
-                        <table className="w-full table-auto">
-                            <thead className="bg-gray-800 text-gray-200 h-16">
-                            <tr>
-                                <th className="px-4 py-3 text-left font-medium">Post</th>
-                                <th className="px-4 py-3 text-left font-medium">Nom</th>
-                                <th className="px-4 py-3 text-left font-medium">Compétences</th>
-                                <th className="px-4 py-3 text-left font-medium">Responsabilités</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                            {currentPosts.map((post, index) => (
-                                <tr key={index}>
-                                    <td className="px-4 py-3 font-medium">{post.post}</td>
-                                    <td className="px-4 py-3">{post.nom}</td>
-                                    <td className="px-4 py-3">
+
+            <div className="container mx-auto mt-5">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden ml-8 mr-8">
+                    <table className="w-full table-auto">
+                        <thead className="bg-gray-800 text-gray-200 h-16">
+                        <tr>
+                            <th className="px-4 py-3 text-left font-medium">Role</th>
+                            <th className="px-4 py-3 text-left font-medium">Nom</th>
+                            <th className="px-4 py-3 text-left font-medium">Compétences</th>
+                            <th className="px-4 py-3 text-left font-medium">Responsabilités</th>
+                        </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                        {currentPosts.map((post, index) => (
+                            <tr key={index}>
+                                <td className="px-4 py-3 font-medium">
+                                    {post.roleName === "Workshop" ? "Ouvrier" : post.roleName}
+                                    {post.gammeName.length > 0 && "/Responsable"}
+                                </td>
+                                <td className="px-4 py-3">{post.userName}</td>
+                                <td className="px-4 py-3">
+                                    <ul className="list-disc list-inside">
+                                        {post.postName.map((competence, index) => (
+                                            <li key={index}>{competence}</li>
+                                        ))}
+                                    </ul>
+                                </td>
+                                <td className="px-4 py-3">
+                                    {post.gammeName.length > 0 ? (
                                         <ul className="list-disc list-inside">
-                                            {post.competences.map((competence, index) => (
-                                                <li key={index}>{competence}</li>
-                                            ))}
-                                        </ul>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <ul className="list-disc list-inside">
-                                            {post.responsabilites.map((responsabilite, index) => (
+                                            {post.gammeName.map((responsabilite, index) => (
                                                 <li key={index}>{responsabilite}</li>
                                             ))}
                                         </ul>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                    ) : (
+                                        <span>N'est pas responsable de gamme</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination */}
