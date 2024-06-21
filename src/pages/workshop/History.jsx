@@ -6,7 +6,7 @@ function History() {
     const [filterBy, setFilterBy] = useState('id');
     const [currentPage, setCurrentPage] = useState(1);
     const [data, setData] = useState([]);
-    const historyPerPage = 5;
+    const historyPerPage = 6;
     const API_URL = process.env.REACT_APP_API_URL;
 
     useState(() => {

@@ -63,7 +63,7 @@ function App() {
                     {role === 'Workshop' && <Route path="/gamme-create" element={<GammeCreate />} />}
                     {role === 'Workshop' && <Route path="/posts" element={<Posts />} />}
                     {role === 'Workshop' && <Route path="/history" element={<History />} />}
-                    {role === 'Workshop' && <Route path="/gamme-production" element={<GammeProduction />} />}
+                    {role === 'Workshop' && <Route path="/gamme-production/:gammeId" element={<GammeProduction />} />}
                     {role === 'Commercial' && <Route path="/devis" element={<Devis />} />}
                     {role === 'Admin' && <Route path="/admin" element={<Admin />} />}
 

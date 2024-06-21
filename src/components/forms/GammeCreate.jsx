@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
-import {LuCalendarRange} from "react-icons/lu";
+import { LuCalendarRange } from "react-icons/lu";
 import { IoMdSave } from "react-icons/io";
 import axios from "axios";
+
 function GammeCreate() {
     const [name, setName] = useState('');
     const [piece, setPiece] = useState('');
@@ -12,9 +13,13 @@ function GammeCreate() {
     const [posts, setPosts] = useState([]);
     const [machine, setMachines] = useState([]);
     const [operation, setOperation] = useState([]);
+    const [users, setUsers] = useState([]);
     const [responsable, setResponsable] = useState('');
     const [components, setComponents] = useState([{ id: 1, name: '', post: '', machine: '', time: '' }]);
-    const [operations, setOperations] = useState([{ id: 1, operation:'' }]);
+    const [operations, setOperations] = useState([{ id: 1, operation: '' }]);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [savedOperations, setSavedOperations] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
 
     useState(() => {
@@ -31,16 +36,85 @@ function GammeCreate() {
 
                 const responseOperations = await axios.get(`${API_URL}/operation/all`);
                 setOperation(responseOperations.data);
+
+                const responseUsers = await axios.get(`${API_URL}/user/workshop`);
+                setUsers(responseUsers.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         };
         fetchData();
-    }, []);
+    }, [API_URL]);
 
+    const createOperation = async (index) => {
+        const comp = components[index];
+        const post = posts.find((p) => p.name === comp.post);
+        const machineObj = machine.find((m) => m.name === comp.machine);
+
+        const operationData = {
+            id_post: post.id,
+            id_machine: machineObj.id,
+            name: comp.name,
+            time: comp.time
+        };
+
+        try {
+            const response = await axios.post(`${API_URL}/operation/create`, operationData);
+            setSuccessMessage('Operation created successfully!');
+            setSavedOperations([...savedOperations, response.data]);
+            handleRemoveComponent(index);
+            const responseOperations = await axios.get(`${API_URL}/operation/all`);
+            setOperation(responseOperations.data);
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 5000);
+
+        } catch (error) {
+            console.error('Error creating operation:', error);
+            setErrorMessage('Failed to create operation.');
+
+            setTimeout(() => {
+                setErrorMessage('');
+            }, 5000);
+        }
+    };
+
+    const createGamme = async () => {
+        const gammeData = {
+            id_piece: pieces.find(p => p.name === piece).id,
+            id_user: responsable,
+            name: name,
+            operations: operations.map(op => ({
+                id_operation: operation.find(o => o.name === op.operation).id,
+                time: operation.find(o => o.name === op.operation).time
+            }))
+        };
+        try {
+            await axios.post(`${API_URL}/gamme-operation/create/gamme`, gammeData);
+            setSuccessMessage('Gamme created successfully!');
+            setName('');
+            setPiece('');
+            setResponsable('');
+            setOperations([{ id: 1, operation: '' }]);
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 5000);
+
+        } catch (error) {
+            console.error('Error creating gamme:', error);
+            if (error.response) {
+                console.error('Server response:', error.response.data);
+            }
+            setErrorMessage('Failed to create gamme.');
+            setTimeout(() => {
+                setErrorMessage('');
+            }, 5000);
+        }
+};
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        createGamme();
     };
 
     const handleAddComponent = () => {
@@ -96,6 +170,18 @@ function GammeCreate() {
                             Remplissez le formulaire ci-dessous pour ajouter une nouvelle gamme
                         </h1>
                     </div>
+
+                    {/* Success and Error Alerts */}
+                    {successMessage && (
+                        <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
+                            <span className="font-medium"></span> {successMessage}
+                        </div>
+                    )}
+                    {errorMessage && (
+                        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                            <span className="font-medium"></span> {errorMessage}
+                        </div>
+                    )}
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -130,17 +216,22 @@ function GammeCreate() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label htmlFor="responsable" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="responsable" className="block text-sm font-medium text-gray-700 mt-4">
                                 Responsable
                             </label>
-                            <input
+                            <select
                                 id="responsable"
                                 value={responsable}
                                 onChange={(e) => setResponsable(e.target.value)}
-                                type="text"
-                                className="border mt-1 block w-full shadow-sm sm:text-sm border-gray-400 rounded-md py-2 px-3"
-                                placeholder="Entrez le responsable"
-                            />
+                                className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                            >
+                                <option value="">Sélectionner un responsable</option>
+                                {users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         {components.map((comp, index) => (
                             <div key={comp.id} className="space-y-2">
@@ -190,15 +281,16 @@ function GammeCreate() {
                                 <button
                                     type="button"
                                     className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 mr-2"
+                                    onClick={() => createOperation(index)}
                                 >
-                                    <IoMdSave className="h-6 w-6"/>
+                                    <IoMdSave className="h-6 w-6" />
                                 </button>
                                 <button
                                     type="button"
                                     className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
                                     onClick={() => handleRemoveComponent(index)}
                                 >
-                                    <MdDeleteForever className="h-6 w-6"/>
+                                    <MdDeleteForever className="h-6 w-6" />
                                 </button>
                             </div>
                         ))}
@@ -226,7 +318,7 @@ function GammeCreate() {
                                     className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
                                     onClick={() => handleRemoveOperation(index)}
                                 >
-                                    <MdDeleteForever className="h-6 w-6"/>
+                                    <MdDeleteForever className="h-6 w-6" />
                                 </button>
                             </div>
                         ))}
@@ -236,7 +328,7 @@ function GammeCreate() {
                                 onClick={handleAddComponent}
                                 type="button"
                             >
-                                Ajouter une nouevelle opération
+                                Ajouter une nouvelle opération
                             </button>
                             <button
                                 className="my-5 w-auto inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700"

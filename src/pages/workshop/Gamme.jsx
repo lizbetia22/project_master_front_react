@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { LuCalendarRange } from 'react-icons/lu';
 import { VscSymbolProperty } from "react-icons/vsc";
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import DeleteConfirmationModalGamme from "../../components/modal/gamme/GammeDeleteModal";
+import UpdateGammeModal from "../../components/modal/gamme/GammeUpdateModal";
 
 function Gamme() {
     const [showModal, setShowModal] = useState(false);
@@ -13,10 +15,12 @@ function Gamme() {
     const [showTooltip, setShowTooltip] = useState(null);
     const [modalGammeId, setModalGammeId] = useState(null);
     const [operationsData, setOperationsData] = useState([]);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [updateModal, setUpdateModal] = useState(false);
 
     const API_URL = process.env.REACT_APP_API_URL;
 
-    useState(() => {
+    useEffect(() => {
         axios.get(`${API_URL}/gamme/all`)
             .then(response => {
                 setGammesData(response.data);
@@ -24,18 +28,28 @@ function Gamme() {
             .catch(error => {
                 console.error("There was an error fetching the gammes data!", error);
             });
-    }, [API_URL]);
+    }, [updateModal,API_URL]);
 
     const fetchOperationsData = (gammeId) => {
         axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`)
             .then(response => {
                 setOperationsData(response.data);
-                console.log(response.data)
                 setShowModal(true);
             })
             .catch(error => {
                 console.error("Error fetching operations data for gamme:", error);
             });
+    };
+
+    const handleDeleteGamme = async () => {
+        try {
+            await axios.delete(`${API_URL}/gamme/delete/${modalGammeId}`)
+            const response = await axios.get(`${API_URL}/gamme/all`);
+            setGammesData(response.data);
+            setDeleteModal(false);
+        } catch (error) {
+            console.error("Error deleting piece:", error);
+        }
     };
 
     const handleSearch = (e) => {
@@ -54,7 +68,17 @@ function Gamme() {
 
     const handleShowModal = (id) => {
         setModalGammeId(id);
-        fetchOperationsData(id); // Fetch operations data when modal is opened
+        fetchOperationsData(id);
+    };
+
+    const handleDeleteGammeModal = (gammeId) => {
+        setModalGammeId(gammeId);
+        setDeleteModal(true);
+    };
+
+    const handleUpdateGammeModal = (id) => {
+        setModalGammeId(id);
+        setUpdateModal(true);
     };
 
     return (
@@ -93,7 +117,7 @@ function Gamme() {
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-medium">{gamme.name}</h3>
                                     <div className="relative inline-block">
-                                        <Link to="/gamme-production">
+                                        <Link to={`/gamme-production/${gamme.id}`}>
                                             <VscSymbolProperty
                                                 className="h-6 w-6 cursor-pointer"
                                                 onMouseEnter={() => setShowTooltip(index)}
@@ -117,10 +141,12 @@ function Gamme() {
                                         >
                                             Détails
                                         </button>
-                                        <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow flex-grow mr-2">
+                                        <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow flex-grow mr-2"
+                                                onClick={() => handleUpdateGammeModal(gamme.id)}>
                                             Modifier
                                         </button>
-                                        <button className="bg-gray-900 text-white py-2 px-4 rounded-md flex-grow ml-2">
+                                        <button className="bg-gray-900 text-white py-2 px-4 rounded-md flex-grow ml-2"
+                                                onClick={() => handleDeleteGammeModal(gamme.id)}>
                                             Supprimer
                                         </button>
                                     </div>
@@ -205,7 +231,16 @@ function Gamme() {
                     </div>
                 </div>
             )}
-
+            <DeleteConfirmationModalGamme
+                showModal={deleteModal}
+                setShowModal={setDeleteModal}
+                onDelete={handleDeleteGamme}
+            />
+            <UpdateGammeModal
+                updateModal={updateModal}
+                setShowModalUpdate={setUpdateModal}
+                gammeId={modalGammeId}
+            />
         </>
     );
 }
