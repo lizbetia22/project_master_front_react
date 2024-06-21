@@ -1,39 +1,48 @@
 import React, { useState } from "react";
 import {MdDelete} from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
-import { GrUserWorker } from "react-icons/gr";
-import DeletePostModal from "../../components/modal/responsible/PostDeleteModal";
+import { BsFillFileEarmarkPostFill } from "react-icons/bs";
+import DeleteOperationModal from "../../components/modal/responsible/OperationDeleteModal";
 
-const PostManagement = () => {
+const Operations = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const postsPerPage = 4;
+    const operationsPerPage = 4;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [editPost, setEditPost] = useState({ nom: ""});
+    const [editOperation, setEditOperation] = useState({ nom: ""});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [postToDelete, setPostToDelete] = useState(null);
+    const [operationToDelete, setOperationToDelete] = useState(null);
 
-    const posts = [
+    const operations = [
         {
             id: 1,
-            nom: "Post 1",
+            nom: "Operation  1",
+            post: 'Post 1',
+            machine: 'Machine 1',
+            temps: 25
         },
         {
             id: 2,
-            nom: "Post 2",
+            nom: "Operation  2",
+            post: 'Post 2',
+            machine: 'Machine 2',
+            temps: 22
         },
         {
-            id: 3,
-            nom: "Post 3",
+            id: 1,
+            nom: "Operation  3",
+            post: 'Post 3',
+            machine: 'Machine 3',
+            temps: 27
         },
     ];
 
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = posts
+    const indexOfLastOperation = currentPage * operationsPerPage;
+    const indexOfFirsOperation = indexOfLastOperation - operationsPerPage;
+    const currentOperations = operations
         .filter(post => post.nom.toLowerCase().includes(searchTerm.toLowerCase()))
-        .slice(indexOfFirstPost, indexOfLastPost);
+        .slice(indexOfFirsOperation, indexOfLastOperation);
 
     const handleSearch = event => {
         setSearchTerm(event.target.value);
@@ -47,7 +56,7 @@ const PostManagement = () => {
     };
 
     const handleEditModalOpen = (machine) => {
-        setEditPost(machine);
+        setEditOperation(machine);
         setShowEditModal(true);
     };
 
@@ -60,20 +69,20 @@ const PostManagement = () => {
     };
 
     const handleDeleteModalOpen = (machine) => {
-        setPostToDelete(machine);
+        setOperationToDelete(machine);
         setShowDeleteModal(true);
     };
 
     return (
         <>
             <div className="mt-1 flex justify-center">
-                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900 mt-5">Gestion des posts</h1>
+                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900 mt-5">Gestion d'opérations</h1>
             </div>
             {/* Search bar */}
             <div className="flex items-center justify-center space-x-2 mt-10">
                 <input
                     className="w-96 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
-                    placeholder="Rechercher un post..."
+                    placeholder="Rechercher une opération..."
                     type="search"
                     value={searchTerm}
                     onChange={handleSearch}
@@ -82,8 +91,8 @@ const PostManagement = () => {
             <div className="mt-2 flex justify-end">
                 <button onClick={handleCreateModalOpen}
                         className="flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
-                    <span className="mr-1">Ajouter un post</span>
-                    <GrUserWorker className="h-5 w-5" />
+                    <span className="mr-1">Ajouter une opération</span>
+                    <BsFillFileEarmarkPostFill className="h-5 w-5" />
                 </button>
             </div>
             {/* Create post Modal */}
@@ -99,7 +108,7 @@ const PostManagement = () => {
                                 {/* Modal content */}
                                 <div className="sm:flex sm:items-center">
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer un post</h3>
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer une opération</h3>
                                         <div className="mt-2">
                                             {/* Inputs for creating a machine */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
@@ -107,6 +116,27 @@ const PostManagement = () => {
                                                 type="text"
                                                 placeholder="Nom"
                                                 id="name"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="post" className="mt-2 block text-sm font-medium text-gray-700">Post</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Post"
+                                                id="post"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="machine" className="mt-2 block text-sm font-medium text-gray-700">Machine</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Machine"
+                                                id="machine"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="time" className="mt-2 block text-sm font-medium text-gray-700">Temps</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Temps"
+                                                id="time"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
@@ -146,15 +176,37 @@ const PostManagement = () => {
                                 {/* Modal content */}
                                 <div className="sm:flex sm:items-center">
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier le post</h3>
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier l'opération</h3>
                                         <div className="mt-2">
                                             {/* Inputs for creating a machine */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
                                             <input
-                                                value={editPost.nom}
+                                                value={editOperation.nom}
                                                 type="text"
                                                 placeholder="Nom"
                                                 id="name"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="post" className="mt-2 block text-sm font-medium text-gray-700">Post</label>
+                                            <input
+                                                value={editOperation.post}
+                                                type="text"
+                                                placeholder="Post"
+                                                id="post"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="machine" className="mt-2 block text-sm font-medium text-gray-700">Machine</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Machine"
+                                                id="machine"
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="time" className="mt-2 block text-sm font-medium text-gray-700">Temps</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Temps"
+                                                id="time"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
@@ -182,10 +234,10 @@ const PostManagement = () => {
                 </div>
             )}
             {/* Delete Machine Modal */}
-            <DeletePostModal
+            <DeleteOperationModal
                 showModal={showDeleteModal}
                 setShowModal={setShowDeleteModal}
-                machine={postToDelete}
+                machine={operationToDelete}
             />
             <div className="container mx-auto mt-5">
                 <div className="bg-white rounded-lg shadow-md overflow-hidden ml-8 mr-8">
@@ -194,14 +246,20 @@ const PostManagement = () => {
                         <tr>
                             <th className="px-20 py-3 text-left font-medium">Id</th>
                             <th className="px-14 py-3 text-left font-medium">Nom</th>
+                            <th className="px-14 py-3 text-left font-medium">Post</th>
+                            <th className="px-14 py-3 text-left font-medium">Machine</th>
+                            <th className="px-10 py-3 text-left font-medium">Temps</th>
                             <th className="px-10 py-3 text-left font-medium">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                        {currentPosts.map((post, index) => (
+                        {currentOperations.map((post, index) => (
                             <tr key={index}>
                                 <td className="px-20 py-3 font-medium">{post.id}</td>
                                 <td className="px-14 py-3">{post.nom}</td>
+                                <td className="px-14 py-3">{post.post}</td>
+                                <td className="px-14 py-3">{post.machine}</td>
+                                <td className="px-14 py-3">{post.temps}</td>
                                 <td className="px-2 py-3">
                                     <button
                                         type="button"
@@ -234,7 +292,7 @@ const PostManagement = () => {
                 >
                     Précédent
                 </button>
-                {Array.from({ length: Math.ceil(posts.length / postsPerPage) }).map((_, index) => (
+                {Array.from({ length: Math.ceil(operations.length / operationsPerPage) }).map((_, index) => (
                     <button
                         key={index}
                         onClick={() => paginate(index + 1)}
@@ -247,7 +305,7 @@ const PostManagement = () => {
                 ))}
                 <button
                     onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(posts.length / postsPerPage)}
+                    disabled={currentPage === Math.ceil(operations.length / operationsPerPage)}
                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r"
                 >
                     Suivant
@@ -257,4 +315,4 @@ const PostManagement = () => {
     );
 };
 
-export default PostManagement;
+export default Operations;

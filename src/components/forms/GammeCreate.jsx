@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
-import { RiArrowGoBackFill } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
 import { LuCalendarRange } from "react-icons/lu";
 import { IoMdSave } from "react-icons/io";
@@ -156,12 +154,6 @@ function GammeCreate() {
                 </h1>
             </div>
             <div className="flex justify-end">
-                <Link to="/gammes">
-                    <button className="flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
-                        <span className="mr-1">Retour</span>
-                        <RiArrowGoBackFill className="h-5 w-5" />
-                    </button>
-                </Link>
             </div>
             <div className="mx-auto max-w-2xl space-y-4 py-8">
                 <div className="bg-white p-6 rounded-lg shadow-md">

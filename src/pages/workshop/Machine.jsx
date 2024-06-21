@@ -1,39 +1,43 @@
 import React, { useState } from "react";
 import {MdDelete} from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
-import { GrUserWorker } from "react-icons/gr";
-import DeletePostModal from "../../components/modal/responsible/PostDeleteModal";
+import { GiToolbox } from "react-icons/gi";
+import DeleteMachineModal from "../../components/modal/responsible/MachineDeleteModal";
 
-const PostManagement = () => {
+const Machine = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const postsPerPage = 4;
+    const machinesPerPage = 4;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [editPost, setEditPost] = useState({ nom: ""});
+    const [editMachine, setEditMachine] = useState({ nom: "", competences: "" });
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [postToDelete, setPostToDelete] = useState(null);
+    const [machineToDelete, setMachineToDelete] = useState(null);
+    const API_URL = process.env.REACT_APP_API_URL;
 
-    const posts = [
+    const machines = [
         {
             id: 1,
-            nom: "Post 1",
+            nom: "Machine 1",
+            competences: "Couper du bois",
         },
         {
             id: 2,
-            nom: "Post 2",
+            nom: "Machine 2",
+            competences: "Couper du bois",
         },
         {
             id: 3,
-            nom: "Post 3",
+            nom: "Machine 3",
+            competences: "Cut",
         },
     ];
 
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = posts
+    const indexOfLastMachine = currentPage * machinesPerPage;
+    const indexOfFirstMachine = indexOfLastMachine - machinesPerPage;
+    const currentMachines = machines
         .filter(post => post.nom.toLowerCase().includes(searchTerm.toLowerCase()))
-        .slice(indexOfFirstPost, indexOfLastPost);
+        .slice(indexOfFirstMachine, indexOfLastMachine);
 
     const handleSearch = event => {
         setSearchTerm(event.target.value);
@@ -47,7 +51,7 @@ const PostManagement = () => {
     };
 
     const handleEditModalOpen = (machine) => {
-        setEditPost(machine);
+        setEditMachine(machine);
         setShowEditModal(true);
     };
 
@@ -60,33 +64,33 @@ const PostManagement = () => {
     };
 
     const handleDeleteModalOpen = (machine) => {
-        setPostToDelete(machine);
+        setMachineToDelete(machine);
         setShowDeleteModal(true);
     };
 
     return (
         <>
             <div className="mt-1 flex justify-center">
-                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900 mt-5">Gestion des posts</h1>
+                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900 mt-5">Gestion des machines</h1>
             </div>
             {/* Search bar */}
             <div className="flex items-center justify-center space-x-2 mt-10">
                 <input
                     className="w-96 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-500 focus:border-gray-500"
-                    placeholder="Rechercher un post..."
+                    placeholder="Rechercher une machine..."
                     type="search"
                     value={searchTerm}
                     onChange={handleSearch}
                 />
             </div>
             <div className="mt-2 flex justify-end">
-                <button onClick={handleCreateModalOpen}
-                        className="flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
-                    <span className="mr-1">Ajouter un post</span>
-                    <GrUserWorker className="h-5 w-5" />
-                </button>
+                    <button onClick={handleCreateModalOpen}
+                            className="flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
+                        <span className="mr-1">Ajouter une machine</span>
+                        <GiToolbox className="h-5 w-5" />
+                    </button>
             </div>
-            {/* Create post Modal */}
+            {/* Create Machine Modal */}
             {showCreateModal && (
                 <div className="fixed z-10 inset-0 overflow-y-auto">
                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -99,7 +103,7 @@ const PostManagement = () => {
                                 {/* Modal content */}
                                 <div className="sm:flex sm:items-center">
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer un post</h3>
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer une machine</h3>
                                         <div className="mt-2">
                                             {/* Inputs for creating a machine */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
@@ -108,6 +112,13 @@ const PostManagement = () => {
                                                 placeholder="Nom"
                                                 id="name"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="post" className="mt-2 block text-sm font-medium text-gray-700">Post</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Post"
+                                                id="post"
+                                                className="mt-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
                                     </div>
@@ -129,11 +140,11 @@ const PostManagement = () => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                            </div>
                     </div>
                 </div>
             )}
-            {/* Edit post Modal */}
+            {/* Edit Machine Modal */}
             {showEditModal && (
                 <div className="fixed z-10 inset-0 overflow-y-auto">
                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -146,16 +157,24 @@ const PostManagement = () => {
                                 {/* Modal content */}
                                 <div className="sm:flex sm:items-center">
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier le post</h3>
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier la machine</h3>
                                         <div className="mt-2">
                                             {/* Inputs for creating a machine */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
                                             <input
-                                                value={editPost.nom}
+                                                value={editMachine.nom}
                                                 type="text"
                                                 placeholder="Nom"
                                                 id="name"
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="post" className="mt-2 block text-sm font-medium text-gray-700">Post</label>
+                                            <input
+                                                value={editMachine.competences}
+                                                type="text"
+                                                placeholder="Post"
+                                                id="post"
+                                                className="mt-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
                                     </div>
@@ -177,31 +196,34 @@ const PostManagement = () => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                            </div>
                     </div>
                 </div>
             )}
             {/* Delete Machine Modal */}
-            <DeletePostModal
+            <DeleteMachineModal
                 showModal={showDeleteModal}
                 setShowModal={setShowDeleteModal}
-                machine={postToDelete}
+                machine={machineToDelete}
             />
             <div className="container mx-auto mt-5">
                 <div className="bg-white rounded-lg shadow-md overflow-hidden ml-8 mr-8">
                     <table className="w-full table-auto">
                         <thead className="bg-gray-800 text-gray-200 h-16">
                         <tr>
-                            <th className="px-20 py-3 text-left font-medium">Id</th>
-                            <th className="px-14 py-3 text-left font-medium">Nom</th>
-                            <th className="px-10 py-3 text-left font-medium">Actions</th>
+                            <th className="px-8 py-3 text-left font-medium">Id</th>
+                            <th className="px-6 py-3 text-left font-medium">Nom</th>
+                            <th className="px-6 py-3 text-left font-medium">Post</th>
+                            <th className="px-8 py-3 text-left font-medium">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
-                        {currentPosts.map((post, index) => (
+                        {currentMachines.map((machine, index) => (
                             <tr key={index}>
-                                <td className="px-20 py-3 font-medium">{post.id}</td>
-                                <td className="px-14 py-3">{post.nom}</td>
+                                <td className="px-8 py-3 font-medium">{machine.id}</td>
+                                <td className="px-6 py-3">{machine.nom}</td>
+                                <td className="px-6 py-3">{machine.competences}
+                                </td>
                                 <td className="px-2 py-3">
                                     <button
                                         type="button"
@@ -211,7 +233,7 @@ const PostManagement = () => {
                                         <FaEdit className="h-5 w-5" />
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteModalOpen(post)}
+                                        onClick={() => handleDeleteModalOpen(machine)}
                                         type="button"
                                         className="px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 ml-2"
                                     >
@@ -234,7 +256,7 @@ const PostManagement = () => {
                 >
                     Précédent
                 </button>
-                {Array.from({ length: Math.ceil(posts.length / postsPerPage) }).map((_, index) => (
+                {Array.from({ length: Math.ceil(machines.length / machinesPerPage) }).map((_, index) => (
                     <button
                         key={index}
                         onClick={() => paginate(index + 1)}
@@ -247,7 +269,7 @@ const PostManagement = () => {
                 ))}
                 <button
                     onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(posts.length / postsPerPage)}
+                    disabled={currentPage === Math.ceil(machines.length / machinesPerPage)}
                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r"
                 >
                     Suivant
@@ -257,4 +279,4 @@ const PostManagement = () => {
     );
 };
 
-export default PostManagement;
+export default Machine;

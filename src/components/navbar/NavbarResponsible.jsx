@@ -7,8 +7,12 @@ import { CgProfile } from "react-icons/cg";
 import { LuLogOut } from "react-icons/lu";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import { FaHistory } from "react-icons/fa";
+import { FaTools } from "react-icons/fa";
+import { GrTools } from "react-icons/gr";
+import { GrUserWorker } from "react-icons/gr";
+import { VscServerProcess } from "react-icons/vsc";
 
-function NavbarWorkShop({ onLogout }) {
+function NavbarResponsible({ onLogout }) {
     const [currentPage, setCurrentPage] = useState('pieces');
     const location = useLocation();
     const navigate = useNavigate();
@@ -39,24 +43,40 @@ function NavbarWorkShop({ onLogout }) {
             <header className="bg-gray-900 text-white py-4 px-6">
                 <div className="container mx-auto flex items-center justify-between">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
-                        Atelier <SiFramework className="h-6 w-6" />
+                        Gestion d'atelier <SiFramework className="h-6 w-6" />
                     </h1>
                     <div className="flex items-center gap-4">
                         <Link to="/pieces" className="flex items-center gap-2">
                             <GoPackage className={`h-5 w-5 ${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Gestion des pièces</span>
+                            <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Pièces</span>
                         </Link>
                         <Link to="/gammes" className="flex items-center gap-2">
-                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
+                            <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'gamme-production' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'gammes' || currentPage === 'gamme-production'  ? 'text-blue-600' : ''}`}>Gammes</span>
+                        </Link>
+                        <Link to="/gamme-create" className="flex items-center gap-2">
+                            <FaTools className={`h-5 w-5 ${currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Création d'une gamme</span>
+                        </Link>
+                        <Link to="/operations" className="flex items-center gap-2">
+                            <VscServerProcess className={`h-5 w-5 ${currentPage === 'operations' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'operations' ? 'text-blue-600' : ''}`}>Opérations</span>
+                        </Link>
+                        <Link to="/machine" className="flex items-center gap-2">
+                            <GrTools className={`h-5 w-5 ${currentPage === 'machine' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'machine' ? 'text-blue-600' : ''}`}>Machines</span>
+                        </Link>
+                        <Link to="/posts" className="flex items-center gap-2">
+                            <GrUserWorker className={`h-5 w-5 ${currentPage === 'posts' ? 'text-blue-600' : ''}`} />
+                            <span className={`${currentPage === 'posts' ? 'text-blue-600' : ''}`}>Posts</span>
                         </Link>
                         <Link to="/workers" className="flex items-center gap-2">
                             <FiBriefcase className={`h-5 w-5 ${currentPage === 'workers' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'workers' ? 'text-blue-600' : ''}`}>Gestion des postes</span>
+                            <span className={`${currentPage === 'workers' ? 'text-blue-600' : ''}`}>Employés</span>
                         </Link>
                         <Link to="/history" className="flex items-center gap-2">
                             <FaHistory className={`h-5 w-5 ${currentPage === 'history' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'history' ? 'text-blue-600' : ''}`}>Historique</span>
+                            <span className={`${currentPage === 'history' ? 'text-blue-600' : ''}`}>Historique d'opérations</span>
                         </Link>
 
                         <div className="flex items-center gap-2">
@@ -75,4 +95,4 @@ function NavbarWorkShop({ onLogout }) {
     );
 }
 
-export default NavbarWorkShop;
+export default NavbarResponsible;

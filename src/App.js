@@ -12,9 +12,13 @@ import decodeToken from './utils/decodeToken';
 import PieceCreate from "./components/forms/PieceCreate";
 import Gamme from "./pages/workshop/Gamme";
 import GammeCreate from "./components/forms/GammeCreate";
-import Posts from "./pages/workshop/Posts";
+import Employers from "./pages/workshop/Employers";
 import History from "./pages/workshop/History";
 import GammeProduction from "./pages/workshop/GammeProduction";
+import NavbarResponsible from "./components/navbar/NavbarResponsible";
+import Machine from "./pages/workshop/Machine";
+import PostManagement from "./pages/workshop/Posts";
+import Operations from "./pages/workshop/Operation";
 
 function App() {
     const [role, setRole] = useState(null);
@@ -49,6 +53,8 @@ function App() {
                     <NavbarWorkShop onLogout={handleLogout} />
                 ) : role === 'Commercial' ? (
                     <NavbarCommerce onLogout={handleLogout} />
+                ) : role === 'Responsible' ? (
+                    <NavbarResponsible onLogout={handleLogout} />
                 ) : (
                     <NavbarAdmin onLogout={handleLogout} />
                 )}
@@ -60,10 +66,22 @@ function App() {
                     {role === 'Workshop' && <Route path="/pieces" element={<Pieces />} />}
                     {role === 'Workshop' && <Route path="/piece-create" element={<PieceCreate/>} />}
                     {role === 'Workshop' && <Route path="/gammes" element={<Gamme />} />}
-                    {role === 'Workshop' && <Route path="/gamme-create" element={<GammeCreate />} />}
-                    {role === 'Workshop' && <Route path="/posts" element={<Posts />} />}
+                    {role === 'Workshop' && <Route path="/workers" element={<Employers />} />}
                     {role === 'Workshop' && <Route path="/history" element={<History />} />}
                     {role === 'Workshop' && <Route path="/gamme-production/:gammeId" element={<GammeProduction />} />}
+
+
+                    {role === 'Responsible' && <Route path="/pieces" element={<Pieces />} />}
+                    {role === 'Responsible' && <Route path="/piece-create" element={<PieceCreate/>} />}
+                    {role === 'Responsible' && <Route path="/gammes" element={<Gamme />} />}
+                    {role === 'Responsible' && <Route path="/gamme-create" element={<GammeCreate />} />}
+                    {role === 'Responsible' && <Route path="/workers" element={<Employers />} />}
+                    {role === 'Responsible' && <Route path="/machine" element={<Machine />} />}
+                    {role === 'Responsible' && <Route path="/posts" element={<PostManagement />} />}
+                    {role === 'Responsible' && <Route path="/history" element={<History />} />}
+                    {role === 'Responsible' && <Route path="/operations" element={<Operations />} />}
+                    {role === 'Responsible' && <Route path="/gamme-production/:gammeId" element={<GammeProduction />} />}
+
                     {role === 'Commercial' && <Route path="/devis" element={<Devis />} />}
                     {role === 'Admin' && <Route path="/admin" element={<Admin />} />}
 
@@ -77,6 +95,8 @@ function App() {
                                 <Navigate to="/pieces" replace />
                             ) : role === 'Commercial' ? (
                                 <Navigate to="/devis" replace />
+                            ) : role === 'Responsible' ? (
+                                <Navigate to="/pieces" replace />
                             ) : (
                                 <Navigate to="/admin" replace />
                             )

@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import { LuCalendarRange } from 'react-icons/lu';
 import { VscSymbolProperty } from "react-icons/vsc";
 import { Link } from "react-router-dom";
 import axios from 'axios';
@@ -85,15 +84,7 @@ function Gamme() {
         <>
             {/* Gestion des gammes */}
             <div className="mt-1 flex justify-center">
-                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900">Gestion des gammes</h1>
-            </div>
-            <div className="mt-2 flex justify-end">
-                <Link to="/gamme-create">
-                    <button className="flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
-                        <span className="mr-1">Ajouter une gamme</span>
-                        <LuCalendarRange className="h-5 w-5" />
-                    </button>
-                </Link>
+                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900 mb-10">Gestion des gammes</h1>
             </div>
             {/* Search bar */}
             <div className="flex items-center justify-center space-x-2">
