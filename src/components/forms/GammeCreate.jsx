@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { MdDeleteForever } from "react-icons/md";
 import { LuCalendarRange } from "react-icons/lu";
 import { IoMdSave } from "react-icons/io";
@@ -9,7 +9,7 @@ function GammeCreate() {
     const [piece, setPiece] = useState('');
     const [pieces, setPieces] = useState([]);
     const [posts, setPosts] = useState([]);
-    const [machine, setMachines] = useState([]);
+    const [machines, setMachines] = useState([]);
     const [operation, setOperation] = useState([]);
     const [users, setUsers] = useState([]);
     const [responsable, setResponsable] = useState('');
@@ -19,6 +19,24 @@ function GammeCreate() {
     const [errorMessage, setErrorMessage] = useState('');
     const [savedOperations, setSavedOperations] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
+    const [selectedPost, setSelectedPost] = useState('');
+    const [filteredMachines, setFilteredMachines] = useState([]);
+
+    useEffect(() => {
+        if (selectedPost) {
+            const post = posts.find(p => p.Post.name === selectedPost);
+            if (post) {
+                const filtered = machines.filter(machine => machine.id_post === post.Post.id);
+                setFilteredMachines(filtered);
+            } else {
+                setFilteredMachines([]);
+            }
+        } else {
+            setFilteredMachines([]);
+        }
+    }, [selectedPost, posts, machines]);
+
+
 
     useState(() => {
         const fetchData = async () => {
@@ -26,7 +44,8 @@ function GammeCreate() {
                 const responsePieces = await axios.get(`${API_URL}/piece/all`);
                 setPieces(responsePieces.data);
 
-                const responsePosts = await axios.get(`${API_URL}/post/all`);
+                const storedId = localStorage.getItem('id');
+                const responsePosts = await axios.get(`${API_URL}/user/posts/${storedId}`);
                 setPosts(responsePosts.data);
 
                 const responseMachines = await axios.get(`${API_URL}/machine/all`);
@@ -46,11 +65,12 @@ function GammeCreate() {
 
     const createOperation = async (index) => {
         const comp = components[index];
-        const post = posts.find((p) => p.name === comp.post);
-        const machineObj = machine.find((m) => m.name === comp.machine);
+        const post = posts.find((p) => p.Post.name === selectedPost);
+        const machineObj = machines.find((m) => m.name === comp.machine);
 
+        console.log(post.Post.id, machineObj, comp.machine)
         const operationData = {
-            id_post: post.id,
+            id_post: post.Post.id,
             id_machine: machineObj.id,
             name: comp.name,
             time: comp.time
@@ -226,7 +246,7 @@ function GammeCreate() {
                             </select>
                         </div>
                         {components.map((comp, index) => (
-                            <div key={comp.id} className="space-y-2">
+                            <div key={index} className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">
                                     Opération {index + 1}
                                 </label>
@@ -239,14 +259,15 @@ function GammeCreate() {
                                         placeholder="Nom"
                                     />
                                     <select
-                                        value={comp.post}
-                                        onChange={(e) => handleComponentChange(index, 'post', e.target.value)}
+                                        id="post"
+                                        value={selectedPost}
+                                        onChange={(e) => setSelectedPost(e.target.value)}
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
-                                        <option value="">Sélectionnez un post</option>
+                                        <option value="">Sélectionnez un poste</option>
                                         {posts.map((post) => (
-                                            <option key={post.id} value={post.name}>
-                                                {post.name}
+                                            <option key={post.Post.id} value={post.Post.name}>
+                                                {post.Post.name}
                                             </option>
                                         ))}
                                     </select>
@@ -263,10 +284,8 @@ function GammeCreate() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez une machine</option>
-                                        {machine.map((machineObj) => (
-                                            <option key={machineObj.id} value={machineObj.name}>
-                                                {machineObj.name}
-                                            </option>
+                                        {filteredMachines.map(machine => (
+                                            <option key={machine.id} value={machine.name}>{machine.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -287,7 +306,7 @@ function GammeCreate() {
                             </div>
                         ))}
                         {operations.map((comp, index) => (
-                            <div key={comp.id} className="space-y-2">
+                            <div key={index} className="space-y-2">
                                 <label className="block text-sm font-medium text-gray-700">
                                     Opération exsitante {index + 1}
                                 </label>

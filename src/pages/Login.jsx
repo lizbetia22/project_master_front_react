@@ -31,6 +31,7 @@ function Login({ onLogin }) {
                     onLogin({ token: data.token, role: decodedToken.role, name:decodedToken.name });
                     localStorage.setItem('name', decodedToken.name);
                     localStorage.setItem('role', decodedToken.role);
+                    localStorage.setItem('id', decodedToken.id);
                 }
 
             } else {
