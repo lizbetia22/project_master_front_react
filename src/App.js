@@ -120,8 +120,3 @@ function App() {
 }
 
 export default App;
-// const response = await axios.get(`${API_URL}/post/all`, {
-//     headers: {
-//         Authorization: `Bearer ${localStorage.getItem('token')}`
-//     }
-// });

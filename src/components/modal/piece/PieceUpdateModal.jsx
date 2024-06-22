@@ -17,7 +17,12 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
     useEffect(() => {
         const fetchPieceDetails = async () => {
             try {
-                const response = await axios.get(`${API_URL}/piece/${pieceId}`);
+                const response = await axios.get(`${API_URL}/piece/${pieceId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 const { name, type, price } = response.data;
                 setName(name);
                 setType(type);
@@ -29,7 +34,12 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
 
         const fetchComponents = async () => {
             try {
-                const response = await axios.get(`${API_URL}/piece_ref/components/${pieceId}`);
+                const response = await axios.get(`${API_URL}/piece_ref/components/${pieceId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setComposants(response.data);
             } catch (error) {
                 console.error("Error fetching components:", error);
@@ -38,7 +48,12 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
 
         const fetchAllPieces = async () => {
             try {
-                const response = await axios.get(`${API_URL}/piece/all`);
+                const response = await axios.get(`${API_URL}/piece/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setAllPieces(response.data);
             } catch (error) {
                 console.error("Error fetching all pieces:", error);
@@ -65,7 +80,12 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                     quantity: composant.quantity
                 }))
             };
-            await axios.put(`${API_URL}/piece/update/ref/${pieceId}`, requestBody);
+            await axios.put(`${API_URL}/piece/update/ref/${pieceId}`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowModal(false);
         } catch (error) {
             console.error("Error updating piece:", error);

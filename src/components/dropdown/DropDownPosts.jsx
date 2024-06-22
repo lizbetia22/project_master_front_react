@@ -10,7 +10,13 @@ const DropdownPosts = ({ handleSelectedPostType }) => {
 
     const fetchOptionsFromAPI = async () => {
         try {
-            const response = await fetch(`${API_URL}/role/all`);
+            const response = await fetch(`${API_URL}/role/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+                )
             if (!response.ok) {
                console.error('Failed to fetch data');
             }

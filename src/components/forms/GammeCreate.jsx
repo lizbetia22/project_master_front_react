@@ -50,20 +50,45 @@ function GammeCreate() {
     useState(() => {
         const fetchData = async () => {
             try {
-                const responsePieces = await axios.get(`${API_URL}/piece/all`);
+                const responsePieces = await axios.get(`${API_URL}/piece/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setPieces(responsePieces.data);
 
                 const storedId = localStorage.getItem('id');
-                const responsePosts = await axios.get(`${API_URL}/user/posts/${storedId}`);
+                const responsePosts = await axios.get(`${API_URL}/user/posts/${storedId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setPosts(responsePosts.data);
 
-                const responseMachines = await axios.get(`${API_URL}/machine/all`);
+                const responseMachines = await axios.get(`${API_URL}/machine/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setMachines(responseMachines.data);
 
-                const responseOperations = await axios.get(`${API_URL}/operation/all`);
+                const responseOperations = await axios.get(`${API_URL}/operation/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setOperation(responseOperations.data);
 
-                const responseUsers = await axios.get(`${API_URL}/user/workshop`);
+                const responseUsers = await axios.get(`${API_URL}/user/workshop`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setUsers(responseUsers.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -76,8 +101,6 @@ function GammeCreate() {
         const comp = components[index];
         const post = posts.find((p) => p.Post.name === selectedPost);
         const machineObj = machines.find((m) => m.name === comp.machine);
-
-        console.log(post.Post.id, machineObj, comp.machine)
         const operationData = {
             id_post: post.Post.id,
             id_machine: machineObj.id,
@@ -90,7 +113,12 @@ function GammeCreate() {
             setSuccessMessage('Operation created successfully!');
             setSavedOperations([...savedOperations, response.data]);
             handleRemoveComponent(index);
-            const responseOperations = await axios.get(`${API_URL}/operation/all`);
+            const responseOperations = await axios.get(`${API_URL}/operation/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setOperation(responseOperations.data);
             setTimeout(() => {
                 setSuccessMessage('');
@@ -117,7 +145,12 @@ function GammeCreate() {
             }))
         };
         try {
-            await axios.post(`${API_URL}/gamme-operation/create/gamme`, gammeData);
+            await axios.post(`${API_URL}/gamme-operation/create/gamme`, gammeData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setSuccessMessage('Gamme created successfully!');
             setName('');
             setPiece('');

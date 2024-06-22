@@ -35,7 +35,12 @@ function Pieces() {
     useEffect(() => {
         const fetchPieces = async () => {
             try {
-                const response = await axios.get(`${API_URL}/piece/all`);
+                const response = await axios.get(`${API_URL}/piece/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setPieces(response.data);
             } catch (error) {
                 console.error("Error fetching pieces:", error);
@@ -55,8 +60,18 @@ function Pieces() {
 
     const handleDeletePiece = async () => {
         try {
-            await axios.delete(`${API_URL}/piece/delete/${selectedPieceId}`);
-            const response = await axios.get(`${API_URL}/piece/all`);
+            await axios.delete(`${API_URL}/piece/delete/${selectedPieceId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            const response = await axios.get(`${API_URL}/piece/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setPieces(response.data);
             setDeleteModal(false);
         } catch (error) {

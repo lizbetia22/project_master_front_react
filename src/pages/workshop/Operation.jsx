@@ -36,14 +36,29 @@ const Operations = () => {
     useEffect(() => {
         const fetchOperations = async () => {
             try {
-                const response = await fetch(`${API_URL}/operation/all`);
+                const response = await fetch(`${API_URL}/operation/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 const data = await response.json();
                 setOperations(data);
 
-                const responsePosts = await axios.get(`${API_URL}/post/all`);
+                const responsePosts = await axios.get(`${API_URL}/post/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setPosts(responsePosts.data);
 
-                const responseMachines = await axios.get(`${API_URL}/machine/all`);
+                const responseMachines = await axios.get(`${API_URL}/machine/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setMachines(responseMachines.data);
             } catch (error) {
                 console.error("Error fetching operations:", error);
@@ -55,8 +70,7 @@ const Operations = () => {
 
     useEffect(() => {
         if (editOperation.id_post) {
-            const filtered = machines.filter(machine => machine.id_post === editOperation.id_post);
-            console.log(filtered,editOperation.id_post, machines)
+            const filtered = machines.filter(machine => machine.id_post.toString() === editOperation.id_post);
             setFilteredMachines(filtered);
         } else {
             setFilteredMachines([]);
@@ -108,7 +122,12 @@ const Operations = () => {
                 name: editOperation.name,
                 time: editOperation.time,
             };
-            await axios.post(`${API_URL}/operation/create`, requestBody);
+            await axios.post(`${API_URL}/operation/create`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowCreateModal(false);
         } catch (error) {
             console.error('Error creating operation:', error);
@@ -123,7 +142,12 @@ const Operations = () => {
                 name: editOperation.name,
                 time: editOperation.time,
             };
-            await axios.put(`${API_URL}/operation/update/${editOperation.id}`, requestBody);
+            await axios.put(`${API_URL}/operation/update/${editOperation.id}`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowEditModal(false);
         } catch (error) {
             console.error('Error updating operation:', error);
@@ -132,7 +156,12 @@ const Operations = () => {
 
     const handleDeleteOperation = async () => {
         try {
-            await axios.delete(`${API_URL}/operation/delete/${operationToDelete.id}`);
+            await axios.delete(`${API_URL}/operation/delete/${operationToDelete.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowDeleteModal(false);
         } catch (error) {
             console.error('Error deleting operation', error);

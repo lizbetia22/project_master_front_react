@@ -18,6 +18,19 @@ function PieceCreate() {
     ];
     const API_URL = process.env.REACT_APP_API_URL;
 
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         handleCreate();
@@ -50,7 +63,12 @@ function PieceCreate() {
         const requestBody = { piece, components: componentsData };
 
         try {
-            await axios.post(`${API_URL}/piece/create/ref`, requestBody);
+            await axios.post(`${API_URL}/piece/create/ref`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setAlertMessage("Pièce créée avec succès !");
             setAlertType("success");
             setName('');
@@ -71,25 +89,18 @@ function PieceCreate() {
 
     const fetchAllPieces = async () => {
         try {
-            const response = await axios.get(`${API_URL}/piece/all`);
+            const response = await axios.get(`${API_URL}/piece/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setAllPieces(response.data);
         } catch (error) {
             console.error("Error fetching all pieces:", error);
         }
     };
 
-    useEffect(() => {
-        const refreshToken = async () => {
-            try {
-                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
-                localStorage.setItem('token', response.data.token);
-            } catch (error) {
-                console.error('Failed to refresh token:', error);
-            }
-        };
-
-        refreshToken();
-    }, [API_URL]);
 
     useState(() => {
         fetchAllPieces();

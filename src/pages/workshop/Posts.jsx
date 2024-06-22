@@ -32,7 +32,12 @@ const PostManagement = () => {
     }, [API_URL]);
     const fetchPosts = async () => {
         try {
-            const response = await fetch(`${API_URL}/post/all`);
+            const response = await fetch(`${API_URL}/post/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             const data = await response.json();
             setPosts(data);
         } catch (error) {
@@ -84,7 +89,12 @@ const PostManagement = () => {
             const requestBody = {
                 name: newPostName
             };
-                await axios.post(`${API_URL}/post/create`, requestBody);
+                await axios.post(`${API_URL}/post/create`, requestBody,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setShowCreateModal(false);
                 setNewPostName("")
                 fetchPosts();
@@ -98,7 +108,12 @@ const PostManagement = () => {
             const requestBody = {
                 name: editPost.name
             };
-            await axios.put(`${API_URL}/post/update/${id}`, requestBody);
+            await axios.put(`${API_URL}/post/update/${id}`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowEditModal(false);
             fetchPosts();
         } catch (error) {
@@ -108,7 +123,12 @@ const PostManagement = () => {
 
     const handleDeletePoste = async (id) => {
         try {
-            await axios.delete(`${API_URL}/post/delete/${id}`);
+            await axios.delete(`${API_URL}/post/delete/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             fetchPosts();
         } catch (error) {
             console.error('Error deleting post:', error);

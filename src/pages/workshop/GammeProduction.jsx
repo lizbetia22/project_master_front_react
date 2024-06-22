@@ -62,7 +62,12 @@ function GammeProduction() {
 
     const fetchDataOperations = async (gammeId) => {
         try {
-            const response = await axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`);
+            const response = await axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setOperations(response.data);
         } catch (error) {
             console.error("There was an error fetching the operations data!", error);
@@ -71,7 +76,12 @@ function GammeProduction() {
 
     const fetchDataGamme = async (gammeId) => {
         try {
-            const response = await axios.get(`${API_URL}/gamme/${gammeId}`);
+            const response = await axios.get(`${API_URL}/gamme/${gammeId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setGamme(response.data);
         } catch (error) {
             console.error("There was an error fetching the gamme data!", error);
@@ -80,7 +90,12 @@ function GammeProduction() {
 
     const fetchDataAllPosts = async () => {
         try {
-            const responsePosts = await axios.get(`${API_URL}/post/all`);
+            const responsePosts = await axios.get(`${API_URL}/post/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setPosts(responsePosts.data);
         } catch (error) {
             console.error("Error fetching posts:", error);
@@ -89,7 +104,12 @@ function GammeProduction() {
 
     const fetchDataAllMachines = async () => {
         try {
-            const responseMachines = await axios.get(`${API_URL}/machine/all`);
+            const responseMachines = await axios.get(`${API_URL}/machine/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setMachines(responseMachines.data);
         } catch (error) {
             console.error("Error fetching machines:", error);
@@ -113,7 +133,12 @@ function GammeProduction() {
                     time: parseInt(time)
                 };
 
-                await axios.post(`${API_URL}/gamme-produce-operation/create`, payload);
+                await axios.post(`${API_URL}/gamme-produce-operation/create`, payload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
             });
 
             await Promise.all(requests);

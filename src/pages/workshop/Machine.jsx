@@ -34,7 +34,12 @@ const Machine = () => {
     }, [API_URL]);
     const fetchMachines = async () => {
         try {
-            const response = await axios.get(`${API_URL}/machine/all`);
+            const response = await axios.get(`${API_URL}/machine/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setMachines(response.data);
         } catch (error) {
             console.error("Error fetching machines:", error);
@@ -43,7 +48,12 @@ const Machine = () => {
 
     const fetchPosts = async () => {
         try {
-            const response = await axios.get(`${API_URL}/post/all`);
+            const response = await axios.get(`${API_URL}/post/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setPosts(response.data);
         } catch (error) {
             console.error("Error fetching posts:", error);
@@ -103,7 +113,12 @@ const Machine = () => {
                 name: newMachineName,
                 id_post: newPostId
             };
-            await axios.post(`${API_URL}/machine/create`, requestBody);
+            await axios.post(`${API_URL}/machine/create`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowCreateModal(false);
             setNewMachineName("");
             setNewPostId("");
@@ -120,7 +135,12 @@ const Machine = () => {
                 id_post: editMachine.competences,
                 name: editMachine.nom,
             };
-            await axios.put(`${API_URL}/machine/update/${editMachine.id}`, requestBody);
+            await axios.put(`${API_URL}/machine/update/${editMachine.id}`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowEditModal(false);
             fetchMachines();
         } catch (error) {
@@ -128,19 +148,20 @@ const Machine = () => {
         }
     };
 
-
-
     const handleDeleteMachine = async (id) => {
         try {
-            await axios.delete(`${API_URL}/machine/delete/${id}`);
-            // Update machines list after deletion
+            await axios.delete(`${API_URL}/machine/delete/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setMachines(machines.filter(machine => machine.id !== id));
             setShowDeleteModal(false);
         } catch (error) {
             console.error('Error deleting machine', error);
         }
     };
-
 
     return (
         <>

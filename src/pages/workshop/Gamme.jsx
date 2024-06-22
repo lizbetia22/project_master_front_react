@@ -28,22 +28,28 @@ function Gamme() {
                 console.error('Failed to refresh token:', error);
             }
         };
-
-        refreshToken();
-    }, [API_URL]);
-
-    useEffect(() => {
-        axios.get(`${API_URL}/gamme/all`)
+        axios.get(`${API_URL}/gamme/all`,
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            })
             .then(response => {
                 setGammesData(response.data);
             })
             .catch(error => {
                 console.error("There was an error fetching the gammes data!", error);
             });
+        refreshToken();
     }, [updateModal,API_URL]);
 
     const fetchOperationsData = (gammeId) => {
-        axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`)
+        axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            })
             .then(response => {
                 setOperationsData(response.data);
                 setShowModal(true);
@@ -55,8 +61,18 @@ function Gamme() {
 
     const handleDeleteGamme = async () => {
         try {
-            await axios.delete(`${API_URL}/gamme/delete/${modalGammeId}`)
-            const response = await axios.get(`${API_URL}/gamme/all`);
+            await axios.delete(`${API_URL}/gamme/delete/${modalGammeId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                })
+            const response = await axios.get(`${API_URL}/gamme/all`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setGammesData(response.data);
             setDeleteModal(false);
         } catch (error) {

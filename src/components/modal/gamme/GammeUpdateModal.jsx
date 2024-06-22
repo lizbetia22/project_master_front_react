@@ -18,19 +18,44 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
         const fetchData = async () => {
             try {
                 if (gammeId) {
-                    const responseData = await axios.get(`${API_URL}/gamme/${gammeId}`);
+                    const responseData = await axios.get(`${API_URL}/gamme/${gammeId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
                     setData(responseData.data);
 
-                    const responsePieces = await axios.get(`${API_URL}/piece/all`);
+                    const responsePieces = await axios.get(`${API_URL}/piece/all`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
                     setPieces(responsePieces.data);
 
-                    const responseUsers = await axios.get(`${API_URL}/user/all`);
+                    const responseUsers = await axios.get(`${API_URL}/user/all`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
                     setUsers(responseUsers.data);
 
-                    const responseOperations = await axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`);
+                    const responseOperations = await axios.get(`${API_URL}/gamme-operation/gamme/${gammeId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
                     setOperations(responseOperations.data);
 
-                    const responseAllOperations = await axios.get(`${API_URL}/operation/all`);
+                    const responseAllOperations = await axios.get(`${API_URL}/operation/all`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${localStorage.getItem('token')}`
+                            }
+                        });
                     setAllOperations(responseAllOperations.data);
                 }
             } catch (error) {
@@ -75,7 +100,12 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
         };
 
         try {
-            await axios.put(`${API_URL}/gamme-operation/update/gammeOperations/${gammeId}`, updatedGamme);
+            await axios.put(`${API_URL}/gamme-operation/update/gammeOperations/${gammeId}`, updatedGamme,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
             setShowModalUpdate(false);
         } catch (error) {
             console.error('Error updating gamme:', error);

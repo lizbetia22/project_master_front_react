@@ -25,7 +25,12 @@ const Employers = () => {
     useState(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`${API_URL}/user-post/posts/gammes`);
+                const response = await axios.get(`${API_URL}/user-post/posts/gammes`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setPosts(response.data);
             } catch (error) {
                 console.error("Error fetching data:", error);

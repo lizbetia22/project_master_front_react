@@ -25,7 +25,12 @@ function History() {
     useState(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`${API_URL}/gamme-produce-operation/all`);
+                const response = await axios.get(`${API_URL}/gamme-produce-operation/all`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 const transformedData = response.data.map(item => ({
                     id: item.id,
                     operation: item.name,

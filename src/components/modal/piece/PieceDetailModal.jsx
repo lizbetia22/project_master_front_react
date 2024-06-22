@@ -8,7 +8,12 @@ function PieceDetailModal({ showModal, setShowModal, selectedPieceId }) {
     useEffect(() => {
         const fetchPieces = async () => {
             try {
-                const response = await axios.get(`${API_URL}/piece_ref/components/${selectedPieceId}`);
+                const response = await axios.get(`${API_URL}/piece_ref/components/${selectedPieceId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
                 setComposants(response.data);
             } catch (error) {
                 console.error('Error fetching pieces:', error);
