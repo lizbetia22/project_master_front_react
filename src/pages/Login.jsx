@@ -18,9 +18,9 @@ function Login({ onLogin }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Origin':'*',
+                    "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"
                 },
-                mode: 'no-cors',
                 body: JSON.stringify({ email, password }),
                 cache: 'default'
             });
