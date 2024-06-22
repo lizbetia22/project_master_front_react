@@ -4,7 +4,6 @@ import { FaEdit } from "react-icons/fa";
 import { BsFillFileEarmarkPostFill } from "react-icons/bs";
 import DeleteOperationModal from "../../components/modal/responsible/OperationDeleteModal";
 import axios from "axios";
-import DeleteMachineModal from "../../components/modal/responsible/MachineDeleteModal";
 
 const Operations = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +19,19 @@ const Operations = () => {
     const [machines, setMachines] = useState([]);
     const [filteredMachines, setFilteredMachines] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
+
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
 
     useEffect(() => {
         const fetchOperations = async () => {
@@ -43,7 +55,7 @@ const Operations = () => {
 
     useEffect(() => {
         if (editOperation.id_post) {
-            const filtered = machines.filter(machine => machine.id_post == editOperation.id_post);
+            const filtered = machines.filter(machine => machine.id_post === editOperation.id_post);
             console.log(filtered,editOperation.id_post, machines)
             setFilteredMachines(filtered);
         } else {

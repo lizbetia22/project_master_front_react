@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
+import axios from "axios";
 
 function Devis() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -8,6 +9,20 @@ function Devis() {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedQuotation, setSelectedQuotation] = useState(null);
     const quotationsPerPage = 5;
+    const API_URL = process.env.REACT_APP_API_URL;
+
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
 
     const quotationData = [
         {

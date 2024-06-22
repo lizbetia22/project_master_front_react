@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 
 function History() {
@@ -8,6 +8,19 @@ function History() {
     const [data, setData] = useState([]);
     const historyPerPage = 6;
     const API_URL = process.env.REACT_APP_API_URL;
+
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
 
     useState(() => {
         const fetchData = async () => {

@@ -26,6 +26,8 @@ function Login({ onLogin }) {
                 const data = await response.json();
                 localStorage.setItem('token', data.token);
 
+                console.log(localStorage.getItem('token'))
+
                 const decodedToken = decodeToken(data.token);
                 if (decodedToken) {
                     onLogin({ token: data.token, role: decodedToken.role, name:decodedToken.name });

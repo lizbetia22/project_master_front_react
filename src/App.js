@@ -22,18 +22,28 @@ import Operations from "./pages/workshop/Operation";
 
 function App() {
     const [role, setRole] = useState(null);
+
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            const decodedToken = decodeToken(token);
-            if (decodedToken) {
-                setRole(decodedToken.role);
+        const checkToken = async () => {
+            const token = localStorage.getItem('token');
+
+            if (token) {
+                const jwtdecode = decodeToken(token);
+                if (jwtdecode.exp <= Math.floor(Date.now() / 1000)) {
+                    handleLogout();
+                } else {
+                    console.log("Le token est valide.");
+                }
             }
-        }
+        };
+        checkToken();
+        const interval = setInterval(checkToken, 60000);
+
+        return () => clearInterval(interval);
     }, []);
 
+
     const handleLogin = async (data) => {
-        localStorage.setItem('token', data.token);
         setRole(data.role);
     };
 
@@ -110,3 +120,8 @@ function App() {
 }
 
 export default App;
+// const response = await axios.get(`${API_URL}/post/all`, {
+//     headers: {
+//         Authorization: `Bearer ${localStorage.getItem('token')}`
+//     }
+// });

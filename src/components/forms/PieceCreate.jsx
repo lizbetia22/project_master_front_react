@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Link } from "react-router-dom";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaTools } from "react-icons/fa";
@@ -77,6 +77,19 @@ function PieceCreate() {
             console.error("Error fetching all pieces:", error);
         }
     };
+
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
 
     useState(() => {
         fetchAllPieces();

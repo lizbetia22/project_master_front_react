@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaRegSave } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
@@ -16,6 +16,18 @@ function GammeProduction() {
     const [errorAlert, setErrorAlert] = useState(false);
     const API_URL = process.env.REACT_APP_API_URL;
 
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
     const handlePostChange = (index, value) => {
         const newOperations = [...operations];
         newOperations[index] = {

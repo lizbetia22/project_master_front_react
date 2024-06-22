@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import { GrUserWorker } from "react-icons/gr";
@@ -18,6 +18,18 @@ const PostManagement = () => {
     const [newPostName, setNewPostName] = useState("");
     const API_URL = process.env.REACT_APP_API_URL;
 
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
     const fetchPosts = async () => {
         try {
             const response = await fetch(`${API_URL}/post/all`);

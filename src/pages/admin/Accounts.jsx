@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { MdOutlineManageAccounts } from "react-icons/md";
 import { FiEdit } from "react-icons/fi";
 import { RiDeleteBinLine } from "react-icons/ri";
+import axios from "axios";
 
 function Admin() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -9,7 +10,8 @@ function Admin() {
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
     const [showModal, setShowModal] = useState(false);
-    const [selectedRow, setSelectedRow] = useState(null)
+    const [selectedRow, setSelectedRow] = useState(null);
+    const API_URL = process.env.REACT_APP_API_URL;
 
     const adminData = [
         {
@@ -66,6 +68,19 @@ function Admin() {
         // Implement logic to save changes
         handleCloseModal();
     };
+
+    useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
+
+        refreshToken();
+    }, [API_URL]);
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">

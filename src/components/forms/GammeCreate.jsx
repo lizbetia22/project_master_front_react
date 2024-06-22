@@ -23,6 +23,14 @@ function GammeCreate() {
     const [filteredMachines, setFilteredMachines] = useState([]);
 
     useEffect(() => {
+        const refreshToken = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/user/refresh/${localStorage.getItem('id')}`);
+                localStorage.setItem('token', response.data.token);
+            } catch (error) {
+                console.error('Failed to refresh token:', error);
+            }
+        };
         if (selectedPost) {
             const post = posts.find(p => p.Post.name === selectedPost);
             if (post) {
@@ -34,7 +42,8 @@ function GammeCreate() {
         } else {
             setFilteredMachines([]);
         }
-    }, [selectedPost, posts, machines]);
+        refreshToken();
+    }, [selectedPost, posts, machines, API_URL]);
 
 
 
