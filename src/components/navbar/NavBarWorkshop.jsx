@@ -44,19 +44,19 @@ function NavbarWorkShop({ onLogout }) {
                     <div className="flex items-center gap-4">
                         <Link to="/pieces" className="flex items-center gap-2">
                             <GoPackage className={`h-5 w-5 ${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Gestion des pièces</span>
+                            <span className={`${currentPage === 'pieces'|| currentPage === 'piece-create' ? 'text-blue-600' : ''}`}>Pièces</span>
                         </Link>
                         <Link to="/gammes" className="flex items-center gap-2">
                             <IoLayersOutline className={`h-5 w-5 ${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gestion des gammes</span>
+                            <span className={`${currentPage === 'gammes' || currentPage === 'gamme-production' || currentPage === 'gamme-create' ? 'text-blue-600' : ''}`}>Gammes</span>
                         </Link>
                         <Link to="/workers" className="flex items-center gap-2">
                             <FiBriefcase className={`h-5 w-5 ${currentPage === 'workers' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'workers' ? 'text-blue-600' : ''}`}>Gestion des postes</span>
+                            <span className={`${currentPage === 'workers' ? 'text-blue-600' : ''}`}>Employés</span>
                         </Link>
                         <Link to="/history" className="flex items-center gap-2">
                             <FaHistory className={`h-5 w-5 ${currentPage === 'history' ? 'text-blue-600' : ''}`} />
-                            <span className={`${currentPage === 'history' ? 'text-blue-600' : ''}`}>Historique</span>
+                            <span className={`${currentPage === 'history' ? 'text-blue-600' : ''}`}>Historique d'opérations</span>
                         </Link>
 
                         <div className="flex items-center gap-2">

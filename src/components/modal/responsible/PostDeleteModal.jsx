@@ -1,6 +1,6 @@
 import React from "react";
 
-const DeletePostModal = ({ showModal, setShowModal }) => {
+const DeletePostModal = ({ showModal, setShowModal, handleDeletePoste, postId }) => {
     return (
         <>
             {showModal && (
@@ -29,7 +29,7 @@ const DeletePostModal = ({ showModal, setShowModal }) => {
                                         </h3>
                                         <div className="mt-2">
                                             <p className="text-sm text-gray-500">
-                                                Êtes-vous sûr de vouloir supprimer cette post ? Cette action est irréversible.
+                                                Êtes-vous sûr de vouloir supprimer ce post ? Cette action est irréversible.
                                             </p>
                                         </div>
                                     </div>
@@ -38,6 +38,7 @@ const DeletePostModal = ({ showModal, setShowModal }) => {
                             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                 <button
                                     onClick={() => {
+                                        handleDeletePoste(postId);
                                         setShowModal(false);
                                     }}
                                     type="button"

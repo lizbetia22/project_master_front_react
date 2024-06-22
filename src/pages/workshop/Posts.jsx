@@ -1,38 +1,41 @@
 import React, { useState } from "react";
-import {MdDelete} from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import { GrUserWorker } from "react-icons/gr";
 import DeletePostModal from "../../components/modal/responsible/PostDeleteModal";
+import axios from "axios";
 
 const PostManagement = () => {
+    const [posts, setPosts] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const postsPerPage = 4;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [editPost, setEditPost] = useState({ nom: ""});
+    const [editPost, setEditPost] = useState({});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [postToDelete, setPostToDelete] = useState(null);
+    const [newPostName, setNewPostName] = useState("");
+    const API_URL = process.env.REACT_APP_API_URL;
 
-    const posts = [
-        {
-            id: 1,
-            nom: "Post 1",
-        },
-        {
-            id: 2,
-            nom: "Post 2",
-        },
-        {
-            id: 3,
-            nom: "Post 3",
-        },
-    ];
+    const fetchPosts = async () => {
+        try {
+            const response = await fetch(`${API_URL}/post/all`);
+            const data = await response.json();
+            setPosts(data);
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+        }
+    };
+
+    useState(() => {
+        fetchPosts();
+    }, []);
 
     const indexOfLastPost = currentPage * postsPerPage;
     const indexOfFirstPost = indexOfLastPost - postsPerPage;
     const currentPosts = posts
-        .filter(post => post.nom.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(post => post.name.toLowerCase().includes(searchTerm.toLowerCase()))
         .slice(indexOfFirstPost, indexOfLastPost);
 
     const handleSearch = event => {
@@ -46,8 +49,8 @@ const PostManagement = () => {
         setShowCreateModal(true);
     };
 
-    const handleEditModalOpen = (machine) => {
-        setEditPost(machine);
+    const handleEditModalOpen = (post) => {
+        setEditPost(post);
         setShowEditModal(true);
     };
 
@@ -59,9 +62,45 @@ const PostManagement = () => {
         setShowEditModal(false);
     };
 
-    const handleDeleteModalOpen = (machine) => {
-        setPostToDelete(machine);
+    const handleDeleteModalOpen = (post) => {
+        setPostToDelete(post);
         setShowDeleteModal(true);
+    };
+
+    const handleCreatePoste = async () => {
+        try {
+            const requestBody = {
+                name: newPostName
+            };
+                await axios.post(`${API_URL}/post/create`, requestBody);
+                setShowCreateModal(false);
+                setNewPostName("")
+                fetchPosts();
+        } catch (error) {
+            console.error('Error creating post:', error);
+        }
+    };
+
+    const handleUpdatePoste = async (id) => {
+        try {
+            const requestBody = {
+                name: editPost.name
+            };
+            await axios.put(`${API_URL}/post/update/${id}`, requestBody);
+            setShowEditModal(false);
+            fetchPosts();
+        } catch (error) {
+            console.error('Error updating post:', error);
+        }
+    };
+
+    const handleDeletePoste = async (id) => {
+        try {
+            await axios.delete(`${API_URL}/post/delete/${id}`);
+            fetchPosts();
+        } catch (error) {
+            console.error('Error deleting post:', error);
+        }
     };
 
     return (
@@ -107,6 +146,8 @@ const PostManagement = () => {
                                                 type="text"
                                                 placeholder="Nom"
                                                 id="name"
+                                                value={newPostName}
+                                                onChange={(e) => setNewPostName(e.target.value)}
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
                                         </div>
@@ -114,7 +155,7 @@ const PostManagement = () => {
                                 </div>
                                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <button
-                                        onClick={handleCreateModalClose}
+                                        onClick={handleCreatePoste}
                                         type="button"
                                         className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:ml-3 sm:w-auto sm:text-sm"
                                     >
@@ -148,10 +189,11 @@ const PostManagement = () => {
                                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                                         <h3 className="text-lg leading-6 font-medium text-gray-900">Modifier le post</h3>
                                         <div className="mt-2">
-                                            {/* Inputs for creating a machine */}
+                                            {/* Inputs for updating post */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
                                             <input
-                                                value={editPost.nom}
+                                                value={editPost.name}
+                                                onChange={(e) => setEditPost({ ...editPost, name: e.target.value })}
                                                 type="text"
                                                 placeholder="Nom"
                                                 id="name"
@@ -162,7 +204,7 @@ const PostManagement = () => {
                                 </div>
                                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <button
-                                        onClick={handleEditModalClose}
+                                        onClick={() => handleUpdatePoste(editPost.id)}
                                         type="button"
                                         className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:ml-3 sm:w-auto sm:text-sm"
                                     >
@@ -185,7 +227,8 @@ const PostManagement = () => {
             <DeletePostModal
                 showModal={showDeleteModal}
                 setShowModal={setShowDeleteModal}
-                machine={postToDelete}
+                handleDeletePoste={handleDeletePoste}
+                postId={postToDelete ? postToDelete.id : null}
             />
             <div className="container mx-auto mt-5">
                 <div className="bg-white rounded-lg shadow-md overflow-hidden ml-8 mr-8">
@@ -201,22 +244,24 @@ const PostManagement = () => {
                         {currentPosts.map((post, index) => (
                             <tr key={index}>
                                 <td className="px-20 py-3 font-medium">{post.id}</td>
-                                <td className="px-14 py-3">{post.nom}</td>
+                                <td className="px-14 py-3">{post.name}</td>
                                 <td className="px-2 py-3">
                                     <button
                                         type="button"
-                                        onClick={handleEditModalOpen}
+                                        onClick={() => handleEditModalOpen(post)}
                                         className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
                                     >
                                         <FaEdit className="h-5 w-5" />
                                     </button>
-                                    <button
-                                        onClick={() => handleDeleteModalOpen(post)}
-                                        type="button"
-                                        className="px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 ml-2"
-                                    >
-                                        <MdDelete className="h-5 w-5" />
-                                    </button>
+                                    {post.Machines.length === 0 && (
+                                        <button
+                                            onClick={() => handleDeleteModalOpen(post)}
+                                            type="button"
+                                            className="px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 ml-2"
+                                        >
+                                            <MdDelete className="h-5 w-5" />
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
