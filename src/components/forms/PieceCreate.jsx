@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaTools } from "react-icons/fa";
@@ -13,6 +13,7 @@ function PieceCreate() {
     const [components, setComponents] = useState([{ id: 1, component: '', quantity: '' }]);
     const [alertMessage, setAlertMessage] = useState('');
     const [alertType, setAlertType] = useState('');
+    const [errors, setErrors] = useState({});
     const options = [
         'Tous les types', 'Matière première', 'Pièces livrables aux clients', 'Pièce achetée', 'Pièce intermédiaire'
     ];
@@ -31,9 +32,32 @@ function PieceCreate() {
         refreshToken();
     }, [API_URL]);
 
+    const validate = () => {
+        const newErrors = {};
+        if (!name.trim()) {
+            newErrors.name = 'Le nom est requis';
+        } else if (/[^a-zA-Z0-9 ]/g.test(name)) {
+            newErrors.name = 'Le nom ne doit pas contenir de symboles';
+        }
+        if (!type) {
+            newErrors.type = 'Le type est requis';
+        }
+        if (!price) {
+            newErrors.price = 'Le prix est requis';
+        } else if (isNaN(price) || parseFloat(price) <= 0) {
+            newErrors.price = 'Le prix doit être un nombre positif';
+        }
+        return newErrors;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        handleCreate();
+        const newErrors = validate();
+        if (Object.keys(newErrors).length === 0) {
+            handleCreate();
+        } else {
+            setErrors(newErrors);
+        }
     };
 
     const handleAddComponent = () => {
@@ -63,18 +87,18 @@ function PieceCreate() {
         const requestBody = { piece, components: componentsData };
 
         try {
-            await axios.post(`${API_URL}/piece/create/ref`, requestBody,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+            await axios.post(`${API_URL}/piece/create/ref`, requestBody, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
             setAlertMessage("Pièce créée avec succès !");
             setAlertType("success");
             setName('');
             setType('');
             setPrice('');
             setComponents([{ id: 1, component: '', quantity: '' }]);
+            setErrors({});
         } catch (error) {
             console.error("Erreur lors de la création de la pièce:", error);
             setAlertMessage("Une erreur est survenue lors de la création de la pièce.");
@@ -89,18 +113,16 @@ function PieceCreate() {
 
     const fetchAllPieces = async () => {
         try {
-            const response = await axios.get(`${API_URL}/piece/all`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+            const response = await axios.get(`${API_URL}/piece/all`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
             setAllPieces(response.data);
         } catch (error) {
             console.error("Error fetching all pieces:", error);
         }
     };
-
 
     useState(() => {
         fetchAllPieces();
@@ -144,9 +166,10 @@ function PieceCreate() {
                                     id="name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                    className={`mt-1 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3 ${errors.name ? 'border-red-500' : ''}`}
                                     placeholder="Entrez le nom de la pièce"
                                 />
+                                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                             </div>
                             <div className="space-y-2">
                                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">
@@ -156,7 +179,7 @@ function PieceCreate() {
                                     id="type"
                                     value={type}
                                     onChange={(e) => setType(e.target.value)}
-                                    className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
+                                    className={`mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm ${errors.type ? 'border-red-500' : ''}`}
                                 >
                                     <option value="">Sélectionnez un type</option>
                                     {options.map((option, index) => (
@@ -165,6 +188,7 @@ function PieceCreate() {
                                         </option>
                                     ))}
                                 </select>
+                                {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -176,9 +200,10 @@ function PieceCreate() {
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                                 type="number"
-                                className="border mt-1 block w-full shadow-sm sm:text-sm border-gray-400 rounded-md py-2 px-3"
+                                className={`border mt-1 block w-full shadow-sm sm:text-sm border-gray-400 rounded-md py-2 px-3 ${errors.price ? 'border-red-500' : ''}`}
                                 placeholder="Entrez le prix"
                             />
+                            {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
                         </div>
                         {components.map((comp, index) => (
                             <div key={comp.id} className="space-y-2">
@@ -211,7 +236,7 @@ function PieceCreate() {
                                     className="inline-flex items-center justify-center px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
                                     onClick={() => handleRemoveComponent(index)}
                                 >
-                                    <MdDeleteForever className="h-6 w-6"/>
+                                    <MdDeleteForever className="h-6 w-6" />
                                 </button>
                             </div>
                         ))}

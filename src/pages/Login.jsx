@@ -17,9 +17,7 @@ function Login({ onLogin }) {
             const response = await fetch(`${API_URL}/user/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin':'*',
-                    "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept"
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ email, password }),
                 cache: 'default'
@@ -50,9 +48,18 @@ function Login({ onLogin }) {
     const token = localStorage.getItem('token');
     if (token) {
         const decodedToken = decodeToken(token);
-        if (decodedToken) {
-            return <Navigate to={`/${decodedToken.role.toLowerCase()}`} replace />;
+        try {
+            if (decodedToken) {
+                return <Navigate to={`/${decodedToken.role.toLowerCase()}`} replace />;
+            }
+        } catch (error) {
+            console.error('Error accessing decodedToken:', error);
+            localStorage.removeItem('id');
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('name');
         }
+
     }
 
     return (
