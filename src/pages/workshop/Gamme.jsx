@@ -16,6 +16,7 @@ function Gamme() {
     const [operationsData, setOperationsData] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [updateModal, setUpdateModal] = useState(false);
+    const storedId = localStorage.getItem('id');
 
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -161,14 +162,22 @@ function Gamme() {
                                         >
                                             Détails
                                         </button>
-                                        <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow flex-grow mr-2"
-                                                onClick={() => handleUpdateGammeModal(gamme.id)}>
-                                            Modifier
-                                        </button>
-                                        <button className="bg-gray-900 text-white py-2 px-4 rounded-md flex-grow ml-2"
-                                                onClick={() => handleDeleteGammeModal(gamme.id)}>
-                                            Supprimer
-                                        </button>
+                                        {storedId === gamme.User.id.toString() && (
+                                            <>
+                                                <button
+                                                    className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow flex-grow mr-2"
+                                                    onClick={() => handleUpdateGammeModal(gamme.id)}
+                                                >
+                                                    Modifier
+                                                </button>
+                                                <button
+                                                    className="bg-gray-900 text-white py-2 px-4 rounded-md flex-grow ml-2"
+                                                    onClick={() => handleDeleteGammeModal(gamme.id)}
+                                                >
+                                                    Supprimer
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

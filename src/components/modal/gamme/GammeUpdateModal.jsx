@@ -34,7 +34,7 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
                         });
                     setPieces(responsePieces.data);
 
-                    const responseUsers = await axios.get(`${API_URL}/user/all`,
+                    const responseUsers = await axios.get(`${API_URL}/user/workshop`,
                         {
                             headers: {
                                 Authorization: `Bearer ${localStorage.getItem('token')}`

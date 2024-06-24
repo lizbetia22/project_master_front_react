@@ -14,6 +14,8 @@ function GammeProduction() {
     const operationsPerPage = 3;
     const [successAlert, setSuccessAlert] = useState(false);
     const [errorAlert, setErrorAlert] = useState(false);
+    const [selectedPost, setSelectedPost] = useState('');
+    const [filteredMachines, setFilteredMachines] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
@@ -28,12 +30,28 @@ function GammeProduction() {
 
         refreshToken();
     }, [API_URL]);
+
+    useEffect(() => {
+        if (selectedPost) {
+            const post = posts.find(p => p.Post.name === selectedPost);
+            if (post) {
+                const filtered = machines.filter(machine => machine.id_post === post.Post.id);
+                setFilteredMachines(filtered);
+            } else {
+                setFilteredMachines([]);
+            }
+        } else {
+            setFilteredMachines([]);
+        }
+    }, [selectedPost, posts, machines]);
+
     const handlePostChange = (index, value) => {
         const newOperations = [...operations];
         newOperations[index] = {
             ...newOperations[index],
             post_name: value
         };
+        setSelectedPost(value)
         setOperations(newOperations);
     };
 
@@ -90,7 +108,7 @@ function GammeProduction() {
 
     const fetchDataAllPosts = async () => {
         try {
-            const responsePosts = await axios.get(`${API_URL}/post/all`,
+            const responsePosts = await axios.get(`${API_URL}/user/posts/${localStorage.getItem('id')}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -121,15 +139,14 @@ function GammeProduction() {
             const requests = operations.map(async (operation) => {
                 const { id, post_name, machine_name, time } = operation;
 
-                // Find post id and machine id from posts and machines arrays
-                const postId = posts.find(post => post.name === post_name)?.id;
+                const postId = posts.find(post => post.Post.name === post_name)?.id;
                 const machineId = machines.find(machine => machine.name === machine_name)?.id;
 
                 const payload = {
-                    id_gamme_operation: id, // Assuming id is the id of the operation
+                    id_gamme_operation: id,
                     id_post: postId,
                     id_machine: machineId,
-                    name: operation.operation_name, // Assuming operation_name is stored in operation
+                    name: operation.operation_name,
                     time: parseInt(time)
                 };
 
@@ -238,8 +255,8 @@ function GammeProduction() {
                                     >
                                         <option value="">Sélectionnez un post</option>
                                         {posts.map((post) => (
-                                            <option key={post.id} value={post.name}>
-                                                {post.name}
+                                            <option key={post.Post.id} value={post.Post.name}>
+                                                {post.Post.name}
                                             </option>
                                         ))}
                                     </select>
@@ -254,10 +271,8 @@ function GammeProduction() {
                                         className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
                                     >
                                         <option value="">Sélectionnez une machine</option>
-                                        {machines.map((machineObj) => (
-                                            <option key={machineObj.id} value={machineObj.name}>
-                                                {machineObj.name}
-                                            </option>
+                                        {filteredMachines.map(machine => (
+                                            <option key={machine.id} value={machine.id}>{machine.name}</option>
                                         ))}
                                     </select>
                                 </div>

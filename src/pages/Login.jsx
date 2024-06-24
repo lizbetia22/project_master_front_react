@@ -68,7 +68,7 @@ function Login({ onLogin }) {
             <div className="mt-8 mb-8">
                 <div className="space-y-2 text-center">
                     <div className="flex items-center justify-center space-x-2 text-center">
-                        <h2 className="text-4xl font-bold">Login zebi</h2>
+                        <h2 className="text-4xl font-bold">Login</h2>
                         <IoHomeOutline className="h-8 w-8" />
                     </div>
                     <p className="text-gray-500 text-xl md:text-lg lg:text-base xl:text-lg">Atelier</p>
