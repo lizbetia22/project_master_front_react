@@ -10,6 +10,15 @@ function NavbarAdmin({ onLogout }) {
     const [currentPage, setCurrentPage] = useState('admin');
     const location = useLocation();
     const navigate = useNavigate();
+    const [userName, setUserName] = useState('');
+
+
+    useEffect(() => {
+        const storedName = localStorage.getItem('name');
+        if (storedName) {
+            setUserName(storedName);
+        }
+    }, []);
 
     useEffect(() => {
         const { pathname } = location;
@@ -39,7 +48,7 @@ function NavbarAdmin({ onLogout }) {
                         </Link>
                         <div className="flex items-center gap-2">
                             <CgProfile className="h-6 w-6" />
-                            <span>John Doe</span>
+                            <span>{userName || 'User'}</span>
                         </div>
                         <div>
                             <button onClick={handleLogout} className="cursor-pointer">

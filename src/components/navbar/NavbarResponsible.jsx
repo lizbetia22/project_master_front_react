@@ -84,9 +84,9 @@ function NavbarResponsible({ onLogout }) {
                             <span>{userName || 'User'}</span>
                         </div>
                         <div>
-                            <Link to="/login" onClick={handleLogout} className="cursor-pointer">
+                            <button onClick={handleLogout} className="cursor-pointer">
                                 <LuLogOut className="h-5 w-5" />
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -19,9 +19,11 @@ import NavbarResponsible from "./components/navbar/NavbarResponsible";
 import Machine from "./pages/workshop/Machine";
 import PostManagement from "./pages/workshop/Posts";
 import Operations from "./pages/workshop/Operation";
+import Order from "./pages/commerce/Order";
+import CompanyOrder from "./pages/commerce/CompanyOrder";
 
 function App() {
-    const [role, setRole] = useState(null);
+    const [role, setRole] = useState(localStorage.getItem('role'));
 
     useEffect(() => {
         const checkToken = async () => {
@@ -30,6 +32,7 @@ function App() {
             if (token) {
                 const jwtdecode = decodeToken(token);
                 if (jwtdecode.exp <= Math.floor(Date.now() / 1000)) {
+                    console.log("expire")
                     handleLogout();
                 } else {
                     console.log("Le token est valide.");
@@ -72,7 +75,7 @@ function App() {
 
                 <Routes>
                     {role === null && <Route path="/login" element={<Login onLogin={handleLogin} />} />}
-                    {role === null && <Route path="*" element={<Navigate to="/login" replace />} />}
+                    {/*{role === null && <Route path="*" element={<Navigate to="/login" replace />} />}*/}
 
                     {role === 'Workshop' && <Route path="/pieces" element={<Pieces />} />}
                     {role === 'Workshop' && <Route path="/piece-create" element={<PieceCreate/>} />}
@@ -94,15 +97,20 @@ function App() {
                     {role === 'Responsible' && <Route path="/gamme-production/:gammeId" element={<GammeProduction />} />}
 
                     {role === 'Commercial' && <Route path="/devis" element={<Devis />} />}
+                    {role === 'Commercial' && <Route path="/order" element={<Order />} />}
+                    {role === 'Commercial' && <Route path="/company-order" element={<CompanyOrder />} />}
+
                     {role === 'Admin' && <Route path="/admin" element={<Admin />} />}
 
                     {/* Redirect to appropriate page for each role */}
+                   
                     <Route
                         path="*"
                         element={
                             role === null ? (
                                 <Navigate to="/login" replace />
-                            ) : role === 'Workshop' ? (
+                            ) :
+                            role === 'Workshop' ? (
                                 <Navigate to="/pieces" replace />
                             ) : role === 'Commercial' ? (
                                 <Navigate to="/devis" replace />

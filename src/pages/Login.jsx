@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { IoHomeOutline } from 'react-icons/io5';
 import { AiFillExclamationCircle } from 'react-icons/ai';
-import { Navigate } from 'react-router-dom';
 import decodeToken from '../utils/decodeToken';
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -46,22 +45,23 @@ function Login({ onLogin }) {
     };
 
     // If user is already logged in, redirect to appropriate page based on role
-    const token = localStorage.getItem('token');
-    if (token) {
-        const decodedToken = decodeToken(token);
-        try {
-            if (decodedToken) {
-                return <Navigate to={`/${decodedToken.role.toLowerCase()}`} replace />;
-            }
-        } catch (error) {
-            console.error('Error accessing decodedToken:', error);
-            localStorage.removeItem('id');
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            localStorage.removeItem('name');
-        }
-
-    }
+    // const token = localStorage.getItem('token');
+    // if (token) {
+    //     const decodedToken = decodeToken(token);
+    //     try {
+    //         if (decodedToken) {
+    //             console.log(JSON.stringify(decodedToken) + 'token zebi')
+    //             return <Navigate to={`/${decodedToken.role.toLowerCase()}`} replace />;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error accessing decodedToken:', error);
+    //         localStorage.removeItem('id');
+    //         localStorage.removeItem('token');
+    //         localStorage.removeItem('role');
+    //         localStorage.removeItem('name');
+    //     }
+    //
+    // }
 
     return (
         <div className="mt-28 max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">

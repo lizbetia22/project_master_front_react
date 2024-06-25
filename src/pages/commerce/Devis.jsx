@@ -8,6 +8,7 @@ function Devis() {
     const [currentPage, setCurrentPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedQuotation, setSelectedQuotation] = useState(null);
+    const [devis, setDevis] = useState([]);
     const quotationsPerPage = 5;
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -24,48 +25,46 @@ function Devis() {
         refreshToken();
     }, [API_URL]);
 
-    const quotationData = [
-        {
-            id: 1,
-            date: "2024-05-01",
-            deadline: "2024-05-15",
-            user: "John Doe",
-            pieces: ["Product A", "Product B"],
-            quantity: [2, 1],
-            price: ["$50", "$30"],
-            action: "Convertir en facture"
-        },
-        {
-            id: 2,
-            date: "2024-04-15",
-            deadline: "2024-05-01",
-            user: "Jane Smith",
-            pieces: ["Product C", "Product D"],
-            quantity: [3, 5],
-            price: ["$20", "$40"],
-            action: "Convertir en facture"
-        },
-        {
-            id: 3,
-            date: "2024-05-01",
-            deadline: "2024-05-15",
-            user: "John Doe",
-            pieces: ["Product A", "Product B"],
-            quantity: [2, 1],
-            price: ["$50", "$30"],
-            action: "Convertir en facture"
-        },
-        {
-            id: 4,
-            date: "2024-04-15",
-            deadline: "2024-05-01",
-            user: "Jane Smith",
-            pieces: ["Product C", "Product D"],
-            quantity: [3, 5],
-            price: ["$20", "$40"],
-            action: "Convertir en facture"
-        },
-    ];
+    useEffect(() => {
+        const fetchDevis = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/devis-piece/all`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                const devisMap = {};
+                response.data.forEach(item => {
+                    const id_devis = item.id_devis;
+                    if (!devisMap[id_devis]) {
+                        devisMap[id_devis] = {
+                            id:id_devis,
+                            date: new Date(item.Devi.date).toLocaleDateString('fr-CA'),
+                            deadline: new Date(item.Devi.deadline).toLocaleDateString('fr-CA'),
+                            user: item.Devi.User.name,
+                            pieces: [],
+                            quantity: [],
+                            price: []
+                        };
+                    }
+
+                    devisMap[id_devis].pieces.push(item.Piece.name);
+                    devisMap[id_devis].quantity.push(item.quantity);
+                    devisMap[id_devis].price.push(item.price);
+                });
+
+                const mappedDevis = Object.values(devisMap);
+
+                setDevis(mappedDevis);
+            } catch (error) {
+                console.error("Error fetching devis:", error);
+            }
+        };
+
+
+        fetchDevis();
+    }, [API_URL]);
 
     const paginate = (array, page_size, page_number) => {
         return array.slice((page_number - 1) * page_size, page_number * page_size);
@@ -83,11 +82,15 @@ function Devis() {
         setSelectedQuotation(null);
     };
 
-    // Fonction de filtrage
-    const filteredData = quotationData.filter(row => {
+
+    const filteredData = devis.filter(row => {
         const value = String(row[filterBy]).toLowerCase();
+        if (filterBy === 'pieces') {
+            return row.pieces.some(piece => piece.toLowerCase().includes(searchTerm.toLowerCase()));
+        }
         return value.includes(searchTerm.toLowerCase());
     });
+
 
     const paginatedFilteredData = paginate(filteredData, quotationsPerPage, currentPage);
 
@@ -114,6 +117,7 @@ function Devis() {
                             <option value="date">Date</option>
                             <option value="deadline">Deadline</option>
                             <option value="user">Utilisateur</option>
+                            <option value="pieces">Pièce</option>
                         </select>
                         <input
                             className="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -161,7 +165,7 @@ function Devis() {
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <ul>
                                     {row.price.map((price, i) => (
-                                        <li key={i}>{price}</li>
+                                        <li key={i}>{price}€</li>
                                     ))}
                                 </ul>
                             </td>
@@ -170,12 +174,13 @@ function Devis() {
                                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
                                     onClick={() => openModal(row)}
                                 >
-                                    {row.action}
+                                    Convertir en facture
                                 </button>
                             </td>
                         </tr>
                     ))}
                     </tbody>
+
                 </table>
             </div>
             {/* Pagination */}
@@ -228,7 +233,7 @@ function Devis() {
                                     <tr key={i}>
                                         <td className="px-6 py-4 whitespace-nowrap">{piece}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.quantity[i]}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.price[i]}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.price[i]}€</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <input type="checkbox" className="form-checkbox h-5 w-5 text-gray-600" />
                                         </td>
