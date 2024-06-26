@@ -382,6 +382,7 @@ function Devis() {
                                         <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.price[index]}€</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <input
+                                                required
                                                 type="checkbox"
                                                 className="form-checkbox h-5 w-5 text-gray-600"
                                                 checked={selectedPieces.includes(index)}

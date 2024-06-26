@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 function Order() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +28,32 @@ function Order() {
 
         fetchOrders();
     }, [API_URL]);
+
+    const downloadPdf = async (id) => {
+        try {
+            const response = await axios.get(`${API_URL}/order-piece/pdf/${id}`, {
+                responseType: 'blob',  // Ensure response is treated as a blob
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Facture_${id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            toast.success('Facture est télécharger avec success!');
+        } catch (error) {
+            toast.error('Une erreur est servenue lors du telechargment de la facture!');
+            console.error("Error fetching PDF:", error);
+        }
+    };
+
 
     const processOrders = (data) => {
         const ordersMap = {};
@@ -138,7 +166,8 @@ function Order() {
                                 </ul>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                                <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                                <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                        onClick={() => downloadPdf(row.id)}>
                                     {row.action}
                                 </button>
                             </td>
@@ -177,6 +206,7 @@ function Order() {
                     Suivant
                 </button>
             </div>
+            <ToastContainer />
         </div>
     );
 }
