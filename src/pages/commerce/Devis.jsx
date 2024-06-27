@@ -3,6 +3,8 @@ import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
 import axios from "axios";
 import { MdOutlineDelete } from "react-icons/md";
 import { toast, ToastContainer } from "react-toastify";
+import { FaUserTie } from "react-icons/fa6";
+import { FaFileInvoiceDollar } from "react-icons/fa";
 import 'react-toastify/dist/ReactToastify.css';
 
 function Devis() {
@@ -14,10 +16,14 @@ function Devis() {
     const [selectedQuotation, setSelectedQuotation] = useState(null);
     const [devis, setDevis] = useState([]);
     const [users, setUsers] = useState([]);
+    const [newClientName, setNewClientName] = useState("");
+    const [showCreateClientModal, setShowCreateClientModal] = useState(false);
     const [piecesOptions, setPiecesOptions] = useState([]);
     const [selectedPieces, setSelectedPieces] = useState([]);
+    const [idClient, setIdClient] = useState({ id_client: '' });
+    const [clientsPiece, setClientsPiece] = useState([]);
     const [newDevis, setNewDevis] = useState({
-        id_user: '',
+        id_client: '',
         date: '',
         deadline: '',
         pieces: [{ piece: '', quantity: '', price: '' }],
@@ -56,14 +62,13 @@ function Devis() {
                             id: id_devis,
                             date: new Date(item.Devi.date).toLocaleDateString('fr-CA'),
                             deadline: new Date(item.Devi.deadline).toLocaleDateString('fr-CA'),
-                            user: item.Devi.User.name,
-                            userId: item.Devi.User.id,
+                            user: item.Devi.Client.name,
+                            userId: item.Devi.Client.id,
                             pieces: [],
                             quantity: [],
                             price: []
                         };
                     }
-
                     devisMap[id_devis].pieces.push(item.Piece.name);
                     devisMap[id_devis].quantity.push(item.quantity);
                     devisMap[id_devis].price.push(item.price);
@@ -79,7 +84,7 @@ function Devis() {
 
         const fetchUsers = async () => {
             try {
-                const response = await axios.get(`${API_URL}/user/commerce`,  {
+                const response = await axios.get(`${API_URL}/client/all`,  {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
@@ -106,7 +111,7 @@ function Devis() {
         fetchDevis();
         fetchUsers();
         fetchPieces();
-    }, [API_URL, addDevisModalOpen]);
+    }, [API_URL, addDevisModalOpen, showCreateClientModal]);
 
     const createDevis = async () => {
         const preparedDevis = {
@@ -126,7 +131,7 @@ function Devis() {
             toast.success('Devis créé avec succès!');
             setAddDevisModalOpen(false);
             setNewDevis({
-                id_user: '',
+                id_client: '',
                 date: '',
                 deadline: '',
                 pieces: [{ piece: '', quantity: '', price: '' }],
@@ -146,7 +151,7 @@ function Devis() {
         }));
 
         const orderData = {
-            id_user:  selectedQuotation.userId,
+            id_client:  selectedQuotation.userId,
             id_devis: selectedQuotation.id,
             date_order: selectedQuotation.date,
             pieces: selectedPiecesData
@@ -165,6 +170,22 @@ function Devis() {
         }
     };
 
+    const fetchDevisByClient = async (e) => {
+        e.preventDefault();
+        try {
+            console.log(idClient)
+            const response = await axios.get(`${API_URL}/devis-piece/piece/${idClient.id_client}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            setClientsPiece(response.data);
+        } catch (error) {
+            setClientsPiece([]);
+            console.error("Error fetching pieces:", error);
+        }
+    };
+
     const paginate = (array, page_size, page_number) => {
         return array.slice((page_number - 1) * page_size, page_number * page_size);
     };
@@ -180,6 +201,13 @@ function Devis() {
     const closeModal = () => {
         setModalOpen(false);
         setSelectedQuotation(null);
+    };
+
+    const handleCloseModal = () => {
+        setIdClient({ id_client: '' });
+        setClientsPiece([]);
+        setSelectedPieces([]);
+        closeModal();
     };
 
     const openAddDevisModal = () => {
@@ -220,12 +248,41 @@ function Devis() {
     };
 
 
-    const handleCheckboxChange = (index) => {
-        if (selectedPieces.includes(index)) {
-            setSelectedPieces(selectedPieces.filter(i => i !== index));
-        } else {
-            setSelectedPieces([...selectedPieces, index]);
+    // const handleCheckboxChange = (index) => {
+    //     if (selectedPieces.includes(index)) {
+    //         setSelectedPieces(selectedPieces.filter(i => i !== index));
+    //     } else {
+    //         setSelectedPieces([...selectedPieces, index]);
+    //     }
+    // };
+
+    const handleCreateClientClose = () => {
+        setShowCreateClientModal(false);
+    };
+
+    const handleCreateClient = async () => {
+        try {
+            const requestBody = {
+                name: newClientName
+            };
+            await axios.post(`${API_URL}/client/create`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            setShowCreateClientModal(false);
+            setNewClientName("")
+            toast.success('Client créé avec succès!');
+        } catch (error) {
+            toast.error('Erreur lors de la création du client.');
+            console.error('Error creating post:', error);
         }
+    };
+
+
+    const handleCreatelientModalOpen = () => {
+        setShowCreateClientModal(true);
     };
 
     const filteredData = devis.filter(row => {
@@ -237,6 +294,20 @@ function Devis() {
     });
 
     const paginatedFilteredData = paginate(filteredData, quotationsPerPage, currentPage);
+    const handleCheckboxChange = (index) => {
+        // Toggle selected piece index in selectedPieces array
+        const newSelectedPieces = [...selectedPieces];
+        if (newSelectedPieces.includes(index)) {
+            newSelectedPieces.splice(newSelectedPieces.indexOf(index), 1);
+        } else {
+            newSelectedPieces.push(index);
+        }
+        setSelectedPieces(newSelectedPieces);
+
+        // Log the selected piece information
+        const selectedPiece = clientsPiece[index];
+        console.log("Selected Piece Info:", selectedPiece);
+    };
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
@@ -244,12 +315,29 @@ function Devis() {
                 <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900">Liste des devis</h1>
             </div>
             <div className="mt-2 flex justify-end">
+                <div className="px-6  whitespace-nowrap">
+                    <button
+                        className="mb-7 flex items-center bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                        onClick={() => openModal(1)}
+                    >
+                        <span className="mr-1">Convertir en facture</span>
+                        <FaFileInvoiceDollar className="h-5 w-5"/>
+                    </button>
+                </div>
                 <button
                     className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
                     onClick={openAddDevisModal}
                 >
                     <span className="mr-1">Ajouter un devis</span>
                     <HiOutlineClipboardDocumentList className="h-5 w-5" />
+                </button>
+
+                <button
+                    className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
+                    onClick={handleCreatelientModalOpen}
+                >
+                    <span className="mr-1">Ajouter un client</span>
+                    <FaUserTie className="h-5 w-5" />
                 </button>
             </div>
             <div className="border rounded-md overflow-hidden">
@@ -281,11 +369,10 @@ function Devis() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Deadline</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Client</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Pièces</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantité</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prix</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -315,14 +402,6 @@ function Devis() {
                                         <li key={i}>{price}€</li>
                                     ))}
                                 </ul>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <button
-                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-                                    onClick={() => openModal(row)}
-                                >
-                                    Convertir en facture
-                                </button>
                             </td>
                         </tr>
                     ))}
@@ -364,7 +443,26 @@ function Devis() {
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
                     <div className="bg-white p-8 rounded-lg w-1/2">
                         <h2 className="text-xl font-bold mb-4">Passer en facture</h2>
-                        <form>
+                        <div className="mb-4">
+                            <label className="block text-gray-700">Client</label>
+                            <select
+                                required
+                                name="client"
+                                value={idClient.id_client}
+                                onChange={(e) => setIdClient({ ...idClient, id_client: parseInt(e.target.value) })}
+                                className="w-full px-4 py-2 border rounded-md"
+                            >
+                                <option value="">Sélectionner un client</option>
+                                {users.map(user => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Conditionally render the table and message */}
+                        {clientsPiece.length > 0 && (
                             <table className="min-w-full divide-y divide-gray-300">
                                 <thead className="bg-gray-50 dark:bg-gray-300">
                                 <tr>
@@ -375,11 +473,11 @@ function Devis() {
                                 </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                {selectedQuotation.pieces.map((piece, index) => (
+                                {clientsPiece.map((piece, index) => (
                                     <tr key={index}>
-                                        <td className="px-6 py-4 whitespace-nowrap">{piece}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.quantity[index]}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">{selectedQuotation.price[index]}€</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{piece.Piece.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{piece.quantity}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{piece.price}€</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <input
                                                 required
@@ -393,16 +491,70 @@ function Devis() {
                                 ))}
                                 </tbody>
                             </table>
-                            <div className="flex justify-end mt-4">
-                                <button className="mr-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-                                        onClick={(e) => convertDevisToOrder(e)}>
-                                    Valider
-                                </button>
-                                <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={closeModal}>
-                                    Fermer
-                                </button>
+                        )}
+
+                        {idClient.id_client && clientsPiece.length === 0 && (
+                            <p>Client n'a pas de devis</p>
+                        )}
+
+                        <div className="flex justify-end mt-4">
+                            <button className="mr-3 bg-gray-300 hover:bg-green-200 border border-green-600 text-gray-800 font-bold py-2 px-4 rounded"
+                                    onClick={fetchDevisByClient}>
+                                Montrer l'information
+                            </button>
+                            <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                    onClick={handleCloseModal}>
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/*Add client modal*/}
+            {showCreateClientModal && (
+                <div className="fixed z-10 inset-0 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 transition-opacity">
+                            <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                        </div>
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                {/* Modal content */}
+                                <div className="sm:flex sm:items-center">
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer un client</h3>
+                                        <div className="mt-2">
+                                            {/* Inputs for creating a machine */}
+                                            <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Nom du client"
+                                                id="name"
+                                                onChange={(e) => setNewClientName(e.target.value)}
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                    <button
+                                        onClick={handleCreateClient}
+                                        type="button"
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Enregistrer
+                                    </button>
+                                    <button
+                                        onClick={handleCreateClientClose}
+                                        type="button"
+                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Annuler
+                                    </button>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}
@@ -413,15 +565,15 @@ function Devis() {
                         <h2 className="text-xl font-bold mb-4">Ajouter un devis</h2>
                         <form onSubmit={handleAddDevisSubmit}>
                             <div className="mb-4">
-                                <label className="block text-gray-700">Utilisateur</label>
+                                <label className="block text-gray-700">Client</label>
                                 <select
                                     required
                                     name="user"
                                     value={newDevis.user}
-                                    onChange={(e) => setNewDevis({ ...newDevis, id_user: parseInt(e.target.value) })}
+                                    onChange={(e) => setNewDevis({ ...newDevis, id_client: parseInt(e.target.value) })}
                                     className="w-full px-4 py-2 border rounded-md"
                                 >
-                                    <option value="">Sélectionner un utilisateur</option>
+                                    <option value="">Sélectionner un client</option>
                                     {users.map(user => (
                                         <option key={user.id} value={user.id}>
                                             {user.name}

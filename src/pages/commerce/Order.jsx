@@ -60,8 +60,8 @@ function Order() {
 
         data.forEach(item => {
             const { id_order, Order, Piece, quantity, price } = item;
-            const { date_order, User } = Order;
-            const user = User.name;
+            const { date_order, Client } = Order;
+            const user = Client.name;
 
             if (!ordersMap[id_order]) {
                 ordersMap[id_order] = {
@@ -131,7 +131,7 @@ function Order() {
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Client</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Pièces</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantité</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prix</th>
