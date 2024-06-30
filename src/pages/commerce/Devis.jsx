@@ -59,7 +59,6 @@ function Devis() {
                     }
                 });
 
-                // Transform the data as needed
                 const devisMap = {};
                 response.data.forEach(item => {
                     const id_devis = item.id_devis;
