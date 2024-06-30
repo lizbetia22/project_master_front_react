@@ -24,6 +24,8 @@ function Devis() {
     const [selectedPieces, setSelectedPieces] = useState([]);
     const [idClient, setIdClient] = useState({ id_client: '' });
     const [clientsPiece, setClientsPiece] = useState([]);
+    const [editDevisModalOpen, setEditDevisModalOpen] = useState(false);
+    const [selectedDevis, setSelectedDevis] = useState(null);
     const [newDevis, setNewDevis] = useState({
         id_client: '',
         date: '',
@@ -48,6 +50,7 @@ function Devis() {
     }, [API_URL]);
 
     useEffect(() => {
+
         const fetchDevis = async () => {
             try {
                 const response = await axios.get(`${API_URL}/devis-piece/all`, {
@@ -56,6 +59,7 @@ function Devis() {
                     }
                 });
 
+                // Transform the data as needed
                 const devisMap = {};
                 response.data.forEach(item => {
                     const id_devis = item.id_devis;
@@ -79,13 +83,11 @@ function Devis() {
                     devisMap[id_devis].price.push(item.price);
                 });
 
-                const mappedDevis = Object.values(devisMap);
-
-                setDevis(mappedDevis);
+                setDevis(Object.values(devisMap));
             } catch (error) {
                 console.error("Error fetching devis:", error);
             }
-        }
+        };
 
         const fetchUsers = async () => {
             try {
@@ -117,6 +119,46 @@ function Devis() {
         fetchUsers();
         fetchPieces();
     }, [API_URL, addDevisModalOpen, showCreateClientModal]);
+
+    const fetchDevis = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/devis-piece/all`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            // Transform the data as needed
+            const devisMap = {};
+            response.data.forEach(item => {
+                const id_devis = item.id_devis;
+                const deadline = item.Devi.deadline
+                    ? new Date(item.Devi.deadline).toLocaleDateString('fr-CA')
+                    : 'pas de deadline';
+                if (!devisMap[id_devis]) {
+                    devisMap[id_devis] = {
+                        id: id_devis,
+                        date: new Date(item.Devi.date).toLocaleDateString('fr-CA'),
+                        deadline: deadline,
+                        user: item.Devi.Client.name,
+                        userId: item.Devi.Client.id,
+                        pieces: [],
+                        quantity: [],
+                        price: []
+                    };
+                }
+                devisMap[id_devis].pieces.push(item.Piece.name);
+                devisMap[id_devis].quantity.push(item.quantity);
+                devisMap[id_devis].price.push(item.price);
+            });
+
+            // Update state with fetched data
+            setDevis(Object.values(devisMap));
+        } catch (error) {
+            console.error("Error fetching devis:", error);
+        }
+    };
+
 
 
     useEffect(() => {
@@ -304,23 +346,38 @@ function Devis() {
         }
     };
 
-    const updateDevis = async (id) => {
-        try {
-            const requestBody = {
+    const handleUpdateDevisSubmit = async (e) => {
+        e.preventDefault();
 
-            };
-            await axios.post(`${API_URL}/devis-piece/update/${id}`, requestBody,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+        const updatedPieces = selectedDevis.pieces.map(piece => ({
+            ...piece,
+            price: parseFloat(piece.price),  // Convert price to float
+        }));
+        const deadline = selectedDevis.deadline === "pas de deadline" ? null : selectedDevis.deadline;
+
+        // Prepare the request body
+        const requestBody = {
+            id_client: selectedDevis.id_client,
+            date: selectedDevis.date,
+            deadline: deadline,
+            pieces: updatedPieces
+        };
+
+        try {
+            await axios.put(`${API_URL}/devis-piece/update/${selectedDevis.id}`, requestBody, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            await fetchDevis();
             toast.success('Devis modifié avec succès!');
+            setEditDevisModalOpen(false);
         } catch (error) {
             toast.error('Erreur lors de la modification du devis.');
-            console.error('Error creating post:', error);
+            console.error('Error updating devis:', error);
         }
     };
+
 
 
     const handleCreatelientModalOpen = () => {
@@ -353,9 +410,27 @@ function Devis() {
             newSelectedPieces.push(index);
             setSelectedPieceIds(prevIds => new Set(prevIds).add(pieceId));
         }
-        console.log("Selected Piece Info:", selectedPiece)
         setSelectedPieces(newSelectedPieces);
     };
+    const handleEditClick = (devis) => {
+        // Assuming the `pieces`, `price`, and `quantity` are all arrays
+        const transformedPieces = devis.pieces.map((pieceName, index) => ({
+            id_piece: index + 1, // You might need to adjust this to match the actual piece IDs
+            quantity: devis.quantity[index],
+            price: devis.price[index]
+        }));
+
+        const transformedDevis = {
+            ...devis,
+            pieces: transformedPieces,
+            id_client: devis.userId,
+            deadline: devis.deadline || ''  // Handle cases where deadline might be null
+        };
+
+        setSelectedDevis(transformedDevis);
+        setEditDevisModalOpen(true);
+    };
+
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
@@ -456,6 +531,7 @@ function Devis() {
                                 {row.deadline === 'pas de deadline' && (
                                     <button
                                         type="button"
+                                        onClick={() => handleEditClick(row)}
                                         className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
                                     >
                                         <FaEdit className="h-5 w-5" />
@@ -734,6 +810,142 @@ function Devis() {
                     </div>
                 </div>
             )}
+            {/*Modal for update devis*/}
+            {editDevisModalOpen && selectedDevis && (
+                <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
+                    <div className="bg-white p-8 rounded-lg w-1/2 max-h-full overflow-auto">
+                        <h2 className="text-xl font-bold mb-4">Modifier un devis</h2>
+                        <form onSubmit={handleUpdateDevisSubmit}>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Client</label>
+                                <select
+                                    required
+                                    name="id_client"
+                                    value={selectedDevis.id_client}
+                                    onChange={(e) => setSelectedDevis({ ...selectedDevis, id_client: parseInt(e.target.value) })}
+                                    className="w-full px-4 py-2 border rounded-md"
+                                >
+                                    <option value="">Sélectionner un client</option>
+                                    {users.map(user => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Date</label>
+                                <input
+                                    required
+                                    type="date"
+                                    name="date"
+                                    value={selectedDevis.date}
+                                    onChange={(e) => setSelectedDevis({ ...selectedDevis, date: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-md"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Deadline</label>
+                                <input
+                                    type="date"
+                                    name="deadline"
+                                    value={selectedDevis.deadline || ''}
+                                    onChange={(e) => setSelectedDevis({ ...selectedDevis, deadline: e.target.value })}
+                                    className="w-full px-4 py-2 border rounded-md"
+                                />
+                            </div>
+                            {selectedDevis.pieces.map((piece, index) => (
+                                <div key={index} className="mb-4">
+                                    <label className="block text-gray-700">Pièce</label>
+                                    <select
+                                        required
+                                        name={`piece-${index}`}
+                                        value={piece.id_piece}
+                                        onChange={(e) => {
+                                            const updatedPieces = [...selectedDevis.pieces];
+                                            updatedPieces[index] = { ...updatedPieces[index], id_piece: parseInt(e.target.value) };
+                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+                                        }}
+                                        className="w-full px-4 py-2 border rounded-md"
+                                    >
+                                        <option value="">Sélectionner une pièce</option>
+                                        {piecesOptions.map(option => (
+                                            <option key={option.id} value={option.id}>
+                                                {option.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <label className="block text-gray-700">Quantité</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        name={`quantity-${index}`}
+                                        value={piece.quantity}
+                                        onChange={(e) => {
+                                            const updatedPieces = [...selectedDevis.pieces];
+                                            updatedPieces[index] = { ...updatedPieces[index], quantity: parseInt(e.target.value) };
+                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+                                        }}
+                                        className="w-full px-4 py-2 border rounded-md"
+                                    />
+                                    <label className="block text-gray-700">Prix</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        name={`price-${index}`}
+                                        value={piece.price}
+                                        onChange={(e) => {
+                                            const updatedPieces = [...selectedDevis.pieces];
+                                            updatedPieces[index] = { ...updatedPieces[index], price: parseFloat(e.target.value) };
+                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+                                        }}
+                                        className="w-full px-4 py-2 border rounded-md"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const updatedPieces = selectedDevis.pieces.filter((_, i) => i !== index);
+                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+                                        }}
+                                        className="mt-2 bg-red-300 hover:bg-red-400 text-red-800 font-bold py-2 px-4 rounded"
+                                    >
+                                        <MdOutlineDelete className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedDevis({
+                                        ...selectedDevis,
+                                        pieces: [...selectedDevis.pieces, { id_piece: '', quantity: 0, price: 0 }]
+                                    });
+                                }}
+                                className="mb-7 flex items-center bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md mr-2"
+                            >
+                                Ajouter une pièce
+                            </button>
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    type="submit"
+                                    className="mr-3 bg-gray-700 text-white hover:bg-gray-600 py-2 px-4 rounded"
+                                >
+                                    Enregistrer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditDevisModalOpen(false)}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                >
+                                    Fermer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+
             <ToastContainer />
         </div>
     );
