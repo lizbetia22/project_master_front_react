@@ -5,10 +5,12 @@ import { MdOutlineDelete } from "react-icons/md";
 import { toast, ToastContainer } from "react-toastify";
 import { FaUserTie } from "react-icons/fa6";
 import { FaFileInvoiceDollar } from "react-icons/fa";
+import { FaEdit } from "react-icons/fa";
 import 'react-toastify/dist/ReactToastify.css';
 
 function Devis() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPieceIds, setSelectedPieceIds] = useState(new Set());
     const [filterBy, setFilterBy] = useState('id');
     const [currentPage, setCurrentPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
@@ -57,11 +59,14 @@ function Devis() {
                 const devisMap = {};
                 response.data.forEach(item => {
                     const id_devis = item.id_devis;
+                    const deadline = item.Devi.deadline
+                        ? new Date(item.Devi.deadline).toLocaleDateString('fr-CA')
+                        : 'pas de deadline';
                     if (!devisMap[id_devis]) {
                         devisMap[id_devis] = {
                             id: id_devis,
                             date: new Date(item.Devi.date).toLocaleDateString('fr-CA'),
-                            deadline: new Date(item.Devi.deadline).toLocaleDateString('fr-CA'),
+                            deadline: deadline,
                             user: item.Devi.Client.name,
                             userId: item.Devi.Client.id,
                             pieces: [],
@@ -113,6 +118,35 @@ function Devis() {
         fetchPieces();
     }, [API_URL, addDevisModalOpen, showCreateClientModal]);
 
+
+    useEffect(() => {
+        const fetchDevisByClient = async () => {
+            try {
+                console.log(idClient);
+                const response = await axios.get(`${API_URL}/devis-piece/piece/${idClient.id_client}`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                setClientsPiece(response.data);
+            } catch (error) {
+                setClientsPiece([]);
+                console.error("Error fetching pieces:", error);
+            }
+        };
+
+        if (idClient.id_client) {
+            fetchDevisByClient();
+        }
+    }, [API_URL, idClient, idClient.id_client]);
+
+
+    const handleClientChange = (e) => {
+        setIdClient({ id_client: parseInt(e.target.value) });
+    };
+
+
+
     const createDevis = async () => {
         const preparedDevis = {
             ...newDevis,
@@ -144,25 +178,37 @@ function Devis() {
 
     const convertDevisToOrder = async (e) => {
         e.preventDefault();
-        const selectedPiecesData = selectedPieces.map(index => ({
-            id_piece: piecesOptions.find(p => p.name === selectedQuotation.pieces[index]).id,
-            quantity: selectedQuotation.quantity[index],
-            price: parseFloat(selectedQuotation.price[index])
-        }));
 
+        // Ensure that idClient and selectedPieces are defined and valid
+        if (!idClient.id_client || selectedPieces.length === 0) {
+            toast.error('Veuillez sélectionner un client et au moins une pièce.');
+            return;
+        }
+
+        // Create the pieces data from selectedPieces
+        const selectedPiecesData = selectedPieces.map(index => {
+            const selectedPiece = clientsPiece[index];
+            return {
+                id_piece: selectedPiece.id_piece,
+                quantity: selectedPiece.quantity,
+                price: parseFloat(selectedPiece.price)
+            };
+        });
+
+        // Prepare the order data
         const orderData = {
-            id_client:  selectedQuotation.userId,
-            id_devis: selectedQuotation.id,
-            date_order: selectedQuotation.date,
+            id_client: idClient.id_client,
+            date_order: new Date().toISOString(),  // Use ISO date format
             pieces: selectedPiecesData
         };
+
         try {
             await axios.post(`${API_URL}/order-piece/create-order`, orderData, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
             });
-            toast.success('Commande créée avec succès!');
+            toast.success('Fcature créée avec succès!');
             setModalOpen(false);
         } catch (error) {
             toast.error('Erreur lors de la création de la commande.');
@@ -170,21 +216,6 @@ function Devis() {
         }
     };
 
-    const fetchDevisByClient = async (e) => {
-        e.preventDefault();
-        try {
-            console.log(idClient)
-            const response = await axios.get(`${API_URL}/devis-piece/piece/${idClient.id_client}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            setClientsPiece(response.data);
-        } catch (error) {
-            setClientsPiece([]);
-            console.error("Error fetching pieces:", error);
-        }
-    };
 
     const paginate = (array, page_size, page_number) => {
         return array.slice((page_number - 1) * page_size, page_number * page_size);
@@ -207,6 +238,7 @@ function Devis() {
         setIdClient({ id_client: '' });
         setClientsPiece([]);
         setSelectedPieces([]);
+        setSelectedPieceIds(new Set());
         closeModal();
     };
 
@@ -248,14 +280,6 @@ function Devis() {
     };
 
 
-    // const handleCheckboxChange = (index) => {
-    //     if (selectedPieces.includes(index)) {
-    //         setSelectedPieces(selectedPieces.filter(i => i !== index));
-    //     } else {
-    //         setSelectedPieces([...selectedPieces, index]);
-    //     }
-    // };
-
     const handleCreateClientClose = () => {
         setShowCreateClientModal(false);
     };
@@ -280,6 +304,24 @@ function Devis() {
         }
     };
 
+    const updateDevis = async (id) => {
+        try {
+            const requestBody = {
+
+            };
+            await axios.post(`${API_URL}/devis-piece/update/${id}`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            toast.success('Devis modifié avec succès!');
+        } catch (error) {
+            toast.error('Erreur lors de la modification du devis.');
+            console.error('Error creating post:', error);
+        }
+    };
+
 
     const handleCreatelientModalOpen = () => {
         setShowCreateClientModal(true);
@@ -295,18 +337,24 @@ function Devis() {
 
     const paginatedFilteredData = paginate(filteredData, quotationsPerPage, currentPage);
     const handleCheckboxChange = (index) => {
+        const selectedPiece = clientsPiece[index];
+        const pieceId = selectedPiece.id_piece;
+
         // Toggle selected piece index in selectedPieces array
         const newSelectedPieces = [...selectedPieces];
         if (newSelectedPieces.includes(index)) {
             newSelectedPieces.splice(newSelectedPieces.indexOf(index), 1);
+            setSelectedPieceIds(prevIds => {
+                const newIds = new Set(prevIds);
+                newIds.delete(pieceId);
+                return newIds;
+            });
         } else {
             newSelectedPieces.push(index);
+            setSelectedPieceIds(prevIds => new Set(prevIds).add(pieceId));
         }
+        console.log("Selected Piece Info:", selectedPiece)
         setSelectedPieces(newSelectedPieces);
-
-        // Log the selected piece information
-        const selectedPiece = clientsPiece[index];
-        console.log("Selected Piece Info:", selectedPiece);
     };
 
     return (
@@ -373,6 +421,7 @@ function Devis() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Pièces</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quantité</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prix</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
                     </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -402,6 +451,16 @@ function Devis() {
                                         <li key={i}>{price}€</li>
                                     ))}
                                 </ul>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                {row.deadline === 'pas de deadline' && (
+                                    <button
+                                        type="button"
+                                        className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
+                                    >
+                                        <FaEdit className="h-5 w-5" />
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -441,7 +500,7 @@ function Devis() {
             {/* Modal for converting quotation to invoice */}
             {modalOpen && selectedQuotation && (
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
-                    <div className="bg-white p-8 rounded-lg w-1/2">
+                    <div className="bg-white p-8 rounded-lg w-1/2 max-h-full overflow-auto">
                         <h2 className="text-xl font-bold mb-4">Passer en facture</h2>
                         <div className="mb-4">
                             <label className="block text-gray-700">Client</label>
@@ -449,7 +508,7 @@ function Devis() {
                                 required
                                 name="client"
                                 value={idClient.id_client}
-                                onChange={(e) => setIdClient({ ...idClient, id_client: parseInt(e.target.value) })}
+                                onChange={handleClientChange}
                                 className="w-full px-4 py-2 border rounded-md"
                             >
                                 <option value="">Sélectionner un client</option>
@@ -459,6 +518,7 @@ function Devis() {
                                     </option>
                                 ))}
                             </select>
+
                         </div>
 
                         {/* Conditionally render the table and message */}
@@ -485,6 +545,7 @@ function Devis() {
                                                 className="form-checkbox h-5 w-5 text-gray-600"
                                                 checked={selectedPieces.includes(index)}
                                                 onChange={() => handleCheckboxChange(index)}
+                                                disabled={selectedPieceIds.has(piece.id_piece) && !selectedPieces.includes(index)}
                                             />
                                         </td>
                                     </tr>
@@ -499,8 +560,8 @@ function Devis() {
 
                         <div className="flex justify-end mt-4">
                             <button className="mr-3 bg-gray-300 hover:bg-green-200 border border-green-600 text-gray-800 font-bold py-2 px-4 rounded"
-                                    onClick={fetchDevisByClient}>
-                                Montrer l'information
+                                    onClick={(e) => convertDevisToOrder(e)}>
+                                Passer en facture
                             </button>
                             <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
                                     onClick={handleCloseModal}>
@@ -528,6 +589,7 @@ function Devis() {
                                             {/* Inputs for creating a machine */}
                                             <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
                                             <input
+                                                required
                                                 type="text"
                                                 placeholder="Nom du client"
                                                 id="name"
@@ -595,7 +657,6 @@ function Devis() {
                             <div className="mb-4">
                                 <label className="block text-gray-700">Deadline</label>
                                 <input
-                                    required
                                     type="date"
                                     name="deadline"
                                     value={newDevis.deadline}
