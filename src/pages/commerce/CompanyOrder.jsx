@@ -30,6 +30,9 @@ function CompanyOrder() {
     const [newSupplierEmail, setNewSupplierEmail] = useState("");
     const API_URL = process.env.REACT_APP_API_URL;
     const [selectedMonths, setSelectedMonths] = useState([]);
+    const [modalUpdate, setModalUpdate] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
+    const [modalDelete, setModalDelete] = useState(false);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -89,6 +92,7 @@ function CompanyOrder() {
             const { date, planned_delivery_date, actual_delivery_date, Supplier } = Company_order;
             const supplier = Supplier.name;
             const email = Supplier.email;
+            const id_supplier = Supplier.id;
 
             if (!ordersMap[id_order]) {
                 ordersMap[id_order] = {
@@ -96,19 +100,21 @@ function CompanyOrder() {
                     date: new Date(date).toLocaleDateString('fr-CA'),
                     user: supplier,
                     email: email,
+                    id_supplier: id_supplier,
                     pieces: [],
                     quantities: [],
                     prices: [],
+                    piece_ids: [],
                     planned_delivery_date: new Date(planned_delivery_date).toLocaleDateString('fr-CA'),
                     actual_delivery_date: actual_delivery_date ? new Date(actual_delivery_date).toLocaleDateString('fr-CA') : null,
                 };
             }
 
             ordersMap[id_order].pieces.push(Piece.name);
+            ordersMap[id_order].piece_ids.push(Piece.id);
             ordersMap[id_order].quantities.push(quantity);
             ordersMap[id_order].prices.push(price);
         });
-
         return Object.values(ordersMap);
     };
 
@@ -125,6 +131,44 @@ function CompanyOrder() {
         const value = String(row[filterBy]).toLowerCase();
         return value.includes(searchTerm.toLowerCase());
     });
+
+    const modalUpdateOpen = (id) => {
+        const selectedCompanyOrder = companyOrders.find(order => order.id === id); // Use find instead of filter to directly get the object
+        console.log(selectedCompanyOrder);
+
+        if (selectedCompanyOrder) {
+            const { id_supplier, date, planned_delivery_date, actual_delivery_date, pieces, quantities, prices, piece_ids } = selectedCompanyOrder;
+
+            setSelectedId(id);
+            setSelectedSupplier(id_supplier);
+            setSelectedDate(date);
+            setPlannedDeliveryDate(planned_delivery_date);
+            setActualDeliveryDate(actual_delivery_date);
+
+            const pieceInputs = pieces.map((piece, index) => ({
+                id_piece: piece_ids[index],
+                quantity: quantities[index],
+                price: prices[index]
+            }));
+
+            setPieceInputs(pieceInputs);
+
+            setModalUpdate(true);
+        } else {
+            console.error(`Company order with id ${id} not found in companyOrders.`);
+        }
+    };
+
+
+
+    const modalDeleteOpen = (id) => {
+        setSelectedId(id);
+        setModalDelete(true);
+    };
+
+    const modalUpdateClose =  () => {
+        setModalUpdate(false)
+    }
 
     const paginatedFilteredData = paginate(filteredData, achatsPerPage, currentPage);
 
@@ -389,19 +433,65 @@ function CompanyOrder() {
         setSelectedMonths([]);
     };
 
-    const updateOrder = async (id) => {
+    const updateCompanyOrder = async () => {
+        if (!selectedId) return;
+
+        const requestBody = {
+            id_supplier: parseInt(selectedSupplier),
+            date: new Date(selectedDate).toISOString(),
+            planned_delivery_date: new Date(plannedDeliveryDate).toISOString(),
+            actual_delivery_date: actualDeliveryDate ? new Date(actualDeliveryDate).toISOString() : null,
+            pieces: pieceInputs.map(piece => ({
+                id_piece: parseInt(piece.id_piece),
+                quantity: parseInt(piece.quantity),
+                price: parseFloat(piece.price)
+            }))
+        };
+
+        if (!requestBody.id_supplier || !requestBody.date || !requestBody.planned_delivery_date || !requestBody.pieces.length ||
+            requestBody.pieces.some(piece => !piece.id_piece || !piece.quantity || !piece.price)) {
+            toast.error('Tout le chaps sont requis');
+            return;
+        }
+
         try {
-            const response = await axios.get(`${API_URL}/company-order-piece/update/${id}`,{
+            await axios.put(`${API_URL}/company-order-piece/update/${selectedId}`, requestBody, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
             });
-         toast.success('')
+
+            toast.success('Acahat modifié avec success!');
+            await fetchOrders();
+            setModalUpdate(false);
         } catch (error) {
-            toast.error('')
-            console.error("Error fetching orders:", error);
+            toast.error('Erreur de modification');
+            console.error("Error updating order:", error);
         }
     };
+
+    const deleteCompanyOrder = async () => {
+        console.log(selectedId)
+        if (!selectedId) {
+            toast.error('Achat not found');
+            return;
+        }
+        try {
+            await axios.delete(`${API_URL}/company-order-piece/delete/${selectedId}`,  {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            toast.success('Acahat supprimé avec success!');
+            await fetchOrders();
+            setModalDelete(false);
+        } catch (error) {
+            toast.error('Erreur de la suppression');
+            console.error("Error updating order:", error);
+        }
+    };
+
 
 
     const currentYear = new Date().getFullYear();
@@ -519,11 +609,13 @@ function CompanyOrder() {
                                     <div>
                                         <button
                                             type="button"
+                                            onClick={() => modalUpdateOpen(row.id)}
                                             className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2">
                                             <FaEdit className="h-5 w-5" />
                                         </button>
                                         <button
                                             type="button"
+                                            onClick={() => modalDeleteOpen(row.id)}
                                             className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2">
                                             <MdDelete className="h-5 w-5" />
                                         </button>
@@ -798,6 +890,183 @@ function CompanyOrder() {
                                         Annuler
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/*Modal update*/}
+            {modalUpdate && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-8 rounded-lg max-h-full overflow-auto">
+                        <h2 className="text-lg font-bold mb-4">Mettre à jour l'achat</h2>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Fournisseur</label>
+                            <select
+                                required
+                                value={selectedSupplier}
+                                onChange={(e) => setSelectedSupplier(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            >
+                                <option value="">Sélectionner un fournisseur</option>
+                                {suppliers.map(supplier => (
+                                    <option key={supplier.id} value={supplier.id}>
+                                        {supplier.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date</label>
+                            <input
+                                required
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date de livraison prévue</label>
+                            <input
+                                required
+                                type="date"
+                                value={plannedDeliveryDate}
+                                onChange={(e) => setPlannedDeliveryDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date de livraison réelle</label>
+                            <input
+                                required
+                                type="date"
+                                value={actualDeliveryDate}
+                                onChange={(e) => setActualDeliveryDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        {pieceInputs.map((piece, index) => (
+                            <div key={index} className="grid grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Pièce</label>
+                                    <select
+                                        required
+                                        value={piece.id_piece}
+                                        onChange={(e) => handlePieceChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    >
+                                        <option value="">Sélectionner une pièce</option>
+                                        {pieces.map(piece => (
+                                            <option key={piece.id} value={piece.id}>
+                                                {piece.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Quantité</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        value={piece.quantity}
+                                        onChange={(e) => handleQuantityChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Prix</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        value={piece.price}
+                                        onChange={(e) => handlePriceChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    />
+                                </div>
+                                <div>
+                                    {index > 0 && (
+                                        <button
+                                            className="mt-2 bg-red-300 hover:bg-red-400 text-red-800 font-bold py-2 px-4 rounded"
+                                            onClick={() => removePieceInput(index)}
+                                        >
+                                            <MdOutlineDelete className="h-5 w-5" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                            onClick={addPieceInput}
+                        >
+                            Ajouter une pièce
+                        </button>
+                        <div className="flex justify-end mt-4">
+                            <button
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                                onClick={modalUpdateClose}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                onClick={updateCompanyOrder}
+                            >
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/*Delete modal*/}
+            {modalDelete && (
+                <div className="fixed z-10 inset-0 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center block sm:p-0">
+                        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                            <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                        </div>
+
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                        <div
+                            className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                            role="dialog" aria-modal="true" aria-labelledby="modal-headline"
+                        >
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-headline">
+                                            Supprimer l'achat
+                                        </h3>
+                                        <div className="mt-2">
+                                            <p className="text-sm text-gray-500">
+                                                Êtes-vous sûr de vouloir supprimer cette achat ? Cette action est irréversible.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                   onClick={deleteCompanyOrder}
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Supprimer
+                                </button>
+                                <button
+                                    onClick={() => setModalDelete(false)}
+                                    type="button"
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-500 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50  sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Annuler
+                                </button>
                             </div>
                         </div>
                     </div>
