@@ -209,10 +209,13 @@ function CompanyOrder() {
         const { value } = e.target;
         setPieceInputs(prevState => {
             const newState = [...prevState];
+            const selectedPiece = pieces.find(piece => piece.id === Number(value));
             newState[index].id_piece = value;
+            newState[index].price = selectedPiece ? selectedPiece.price : ''; // Set price based on selected piece
             return newState;
         });
     };
+
 
     const handleQuantityChange = (e, index) => {
         const { value } = e.target;
