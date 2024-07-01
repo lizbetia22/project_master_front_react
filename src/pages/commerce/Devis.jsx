@@ -126,8 +126,6 @@ function Devis() {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
             });
-
-            // Transform the data as needed
             const devisMap = {};
             response.data.forEach(item => {
                 const id_devis = item.id_devis;
@@ -220,13 +218,11 @@ function Devis() {
     const convertDevisToOrder = async (e) => {
         e.preventDefault();
 
-        // Ensure that idClient and selectedPieces are defined and valid
         if (!idClient.id_client || selectedPieces.length === 0) {
             toast.error('Veuillez sélectionner un client et au moins une pièce.');
             return;
         }
 
-        // Create the pieces data from selectedPieces
         const selectedPiecesData = selectedPieces.map(index => {
             const selectedPiece = clientsPiece[index];
             return {
@@ -235,8 +231,6 @@ function Devis() {
                 price: parseFloat(selectedPiece.price)
             };
         });
-
-        // Prepare the order data
         const orderData = {
             id_client: idClient.id_client,
             date_order: new Date().toISOString(),  // Use ISO date format
@@ -306,14 +300,22 @@ function Devis() {
 
     const handleNewDevisChange = (e, index) => {
         const { name, value } = e.target;
-        if (["piece", "quantity", "price"].includes(name)) {
-            const pieces = [...newDevis.pieces];
+        const pieces = [...newDevis.pieces];
+
+        if (name === "piece") {
+            const selectedPiece = piecesOptions.find(option => option.name === value);
             pieces[index][name] = value;
-            setNewDevis({ ...newDevis, pieces });
+            pieces[index].price = selectedPiece ? selectedPiece.price : '';
+        } else if (name === "quantity" || name === "price") {
+            pieces[index][name] = value;
         } else {
             setNewDevis({ ...newDevis, [name]: value });
+            return;
         }
+
+        setNewDevis({ ...newDevis, pieces });
     };
+
 
     const handleAddDevisSubmit = (e) => {
         e.preventDefault();
@@ -350,7 +352,7 @@ function Devis() {
 
         const updatedPieces = selectedDevis.pieces.map(piece => ({
             ...piece,
-            price: parseFloat(piece.price),  // Convert price to float
+            price: parseFloat(piece.price),
         }));
         const deadline = selectedDevis.deadline === "pas de deadline" ? null : selectedDevis.deadline;
 
@@ -377,7 +379,31 @@ function Devis() {
         }
     };
 
+    const handlePieceChange = (e, index) => {
+        const selectedPieceId = parseInt(e.target.value);
+        const selectedPiece = piecesOptions.find(option => option.id === selectedPieceId);
 
+        const updatedPieces = [...selectedDevis.pieces];
+        updatedPieces[index] = {
+            ...updatedPieces[index],
+            id_piece: selectedPieceId,
+            price: selectedPiece ? selectedPiece.price : 0
+        };
+
+        setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+    };
+
+    const handlePieceQuantityChange = (e, index) => {
+        const updatedPieces = [...selectedDevis.pieces];
+        updatedPieces[index] = { ...updatedPieces[index], quantity: parseInt(e.target.value) };
+        setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+    };
+
+    const handlePiecePriceChange = (e, index) => {
+        const updatedPieces = [...selectedDevis.pieces];
+        updatedPieces[index] = { ...updatedPieces[index], price: parseFloat(e.target.value) };
+        setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
+    };
 
     const handleCreatelientModalOpen = () => {
         setShowCreateClientModal(true);
@@ -396,7 +422,6 @@ function Devis() {
         const selectedPiece = clientsPiece[index];
         const pieceId = selectedPiece.id_piece;
 
-        // Toggle selected piece index in selectedPieces array
         const newSelectedPieces = [...selectedPieces];
         if (newSelectedPieces.includes(index)) {
             newSelectedPieces.splice(newSelectedPieces.indexOf(index), 1);
@@ -412,9 +437,8 @@ function Devis() {
         setSelectedPieces(newSelectedPieces);
     };
     const handleEditClick = (devis) => {
-        // Assuming the `pieces`, `price`, and `quantity` are all arrays
         const transformedPieces = devis.pieces.map((pieceName, index) => ({
-            id_piece: index + 1, // You might need to adjust this to match the actual piece IDs
+            id_piece: index + 1,
             quantity: devis.quantity[index],
             price: devis.price[index]
         }));
@@ -423,7 +447,7 @@ function Devis() {
             ...devis,
             pieces: transformedPieces,
             id_client: devis.userId,
-            deadline: devis.deadline || ''  // Handle cases where deadline might be null
+            deadline: devis.deadline || ''
         };
 
         setSelectedDevis(transformedDevis);
@@ -860,11 +884,7 @@ function Devis() {
                                         required
                                         name={`piece-${index}`}
                                         value={piece.id_piece}
-                                        onChange={(e) => {
-                                            const updatedPieces = [...selectedDevis.pieces];
-                                            updatedPieces[index] = { ...updatedPieces[index], id_piece: parseInt(e.target.value) };
-                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
-                                        }}
+                                        onChange={(e) => handlePieceChange(e, index)}
                                         className="w-full px-4 py-2 border rounded-md"
                                     >
                                         <option value="">Sélectionner une pièce</option>
@@ -880,11 +900,7 @@ function Devis() {
                                         type="number"
                                         name={`quantity-${index}`}
                                         value={piece.quantity}
-                                        onChange={(e) => {
-                                            const updatedPieces = [...selectedDevis.pieces];
-                                            updatedPieces[index] = { ...updatedPieces[index], quantity: parseInt(e.target.value) };
-                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
-                                        }}
+                                        onChange={(e) => handlePieceQuantityChange(e, index)}
                                         className="w-full px-4 py-2 border rounded-md"
                                     />
                                     <label className="block text-gray-700">Prix</label>
@@ -893,11 +909,7 @@ function Devis() {
                                         type="number"
                                         name={`price-${index}`}
                                         value={piece.price}
-                                        onChange={(e) => {
-                                            const updatedPieces = [...selectedDevis.pieces];
-                                            updatedPieces[index] = { ...updatedPieces[index], price: parseFloat(e.target.value) };
-                                            setSelectedDevis({ ...selectedDevis, pieces: updatedPieces });
-                                        }}
+                                        onChange={(e) => handlePiecePriceChange(e, index)}
                                         className="w-full px-4 py-2 border rounded-md"
                                     />
                                     <button
@@ -943,7 +955,6 @@ function Devis() {
                     </div>
                 </div>
             )}
-
 
             <ToastContainer />
         </div>

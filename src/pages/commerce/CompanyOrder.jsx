@@ -2,13 +2,25 @@ import React, {useEffect, useState} from 'react';
 import { BiPurchaseTag } from "react-icons/bi";
 import { GrDocumentCsv } from "react-icons/gr";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import {MdOutlineDelete} from "react-icons/md";
 
 function CompanyOrder() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterBy, setFilterBy] = useState('id');
     const [currentPage, setCurrentPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
+    const [modalAdd, setModalAdd] = useState(false);
+    const [selectedSupplier, setSelectedSupplier] = useState('');
+    const [selectedDate, setSelectedDate] = useState('');
+    const [plannedDeliveryDate, setPlannedDeliveryDate] = useState('');
+    const [actualDeliveryDate, setActualDeliveryDate] = useState('');
+    const [pieceInputs, setPieceInputs] = useState([{ id_piece: '', quantity: '', price: '' }]);
     const [companyOrders, setCompanyOrders] = useState([]);
+    const [suppliers, setSuppliers] = useState([]);
+    const [pieces, setPieces] = useState([]);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const achatsPerPage = 4;
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -20,7 +32,6 @@ function CompanyOrder() {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                console.log("Fetched Data:", response.data);  // Add this line
                 const processedOrders = processOrders(response.data);
                 setCompanyOrders(processedOrders);
             } catch (error) {
@@ -28,8 +39,38 @@ function CompanyOrder() {
             }
         };
 
+        const fetchSuppliers = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/supplier/all`,  {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                setSuppliers(response.data);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+            }
+        };
+
+        const fetchPieces = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/piece/all`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                setPieces(response.data);
+            } catch (error) {
+                console.error("Error fetching pieces:", error);
+            }
+        };
+        fetchSuppliers();
+        fetchPieces();
         fetchOrders();
     }, [API_URL]);
+
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
     const processOrders = (data) => {
 
@@ -86,19 +127,128 @@ function CompanyOrder() {
         "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ];
 
+    const fetchOrders = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/company-order-piece/all`,{
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const processedOrders = processOrders(response.data);
+            setCompanyOrders(processedOrders);
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        }
+    };
+
+    const createCompanyOrder = async () => {
+        if (!selectedSupplier || !selectedDate || !plannedDeliveryDate || !actualDeliveryDate) {
+            toast.error('Tous les champs sont requis.');
+            return;
+        }
+
+        const invalidPiece = pieceInputs.find(piece => !piece.id_piece || !piece.quantity || !piece.price);
+        if (invalidPiece) {
+            toast.error('Tous les champs de la pièce sont requis.');
+            return;
+        }
+        const requestBody = {
+            id_supplier: selectedSupplier,
+            date: selectedDate,
+            planned_delivery_date: plannedDeliveryDate,
+            actual_delivery_date: actualDeliveryDate,
+            pieces: pieceInputs.map(piece => ({
+                id_piece: piece.id_piece,
+                quantity: piece.quantity,
+                price: piece.price
+            }))
+        };
+        try {
+            await axios.post(`${API_URL}/company-order-piece/create-order`, requestBody, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            await fetchOrders();
+            toast.success('Achat créé avec succès!');
+            setSelectedSupplier('');
+            setSelectedDate('');
+            setPlannedDeliveryDate('');
+            setActualDeliveryDate('');
+            setPieceInputs([{ id_piece: '', quantity: '', price: '' }]);
+            setModalAdd(false);
+        } catch (error) {
+            toast.error('Erreur lors de la création de l\'achat.');
+            console.error("Error creating order:", error);
+        }
+    };
+
+    const closeAddModal = () => {
+        setModalAdd(false)
+        setSelectedSupplier('');
+        setSelectedDate('');
+        setPlannedDeliveryDate('');
+        setActualDeliveryDate('');
+        setPieceInputs([{ id_piece: '', quantity: '', price: '' }]);
+    }
+
+
+    const addPieceInput = () => {
+        setPieceInputs(prevState => [...prevState, { id_piece: '', quantity: '', price: '' }]);
+    };
+
+    const removePieceInput = (index) => {
+        setPieceInputs(prevState => {
+            const newState = [...prevState];
+            newState.splice(index, 1);
+            return newState;
+        });
+    };
+
+    const handlePieceChange = (e, index) => {
+        const { value } = e.target;
+        setPieceInputs(prevState => {
+            const newState = [...prevState];
+            newState[index].id_piece = value;
+            return newState;
+        });
+    };
+
+    const handleQuantityChange = (e, index) => {
+        const { value } = e.target;
+        setPieceInputs(prevState => {
+            const newState = [...prevState];
+            newState[index].quantity = value;
+            return newState;
+        });
+    };
+
+    const handlePriceChange = (e, index) => {
+        const { value } = e.target;
+        setPieceInputs(prevState => {
+            const newState = [...prevState];
+            newState[index].price = value;
+            return newState;
+        });
+    };
+
+
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
             <div className="flex justify-center">
                 <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900">Liste des achats</h1>
             </div>
             <div className="flex justify-end">
-                <button className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2">
+                <button
+                    className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
+                    onClick={() => setModalAdd(true)}
+                >
                     <span className="mr-1">Ajouter un achat</span>
                     <BiPurchaseTag className="h-5 w-5" />
                 </button>
                 <button
                     className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
-                    onClick={() => setModalOpen(true)} // Ouvre la modal lors du clic
+                    onClick={() => setModalOpen(true)}
                 >
                     <span className="mr-1">Télécharger des achats</span>
                     <GrDocumentCsv className="h-5 w-5" />
@@ -214,8 +364,21 @@ function CompanyOrder() {
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-white p-8 rounded-lg">
                         <h2 className="text-lg font-bold mb-4">Choisir un mois pour le fichier csv</h2>
-                        {/* Mois avec cases à cocher */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Année</label>
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            >
+                                {years.map((year) => (
+                                    <option key={year} value={year}>
+                                        {year}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 mb-4">
                             {months.map((month, index) => (
                                 <label key={index} className="flex items-center space-x-2">
                                     <input type="checkbox" className="form-checkbox h-6 w-6" />
@@ -223,7 +386,6 @@ function CompanyOrder() {
                                 </label>
                             ))}
                         </div>
-                        {/* Boutons de validation et d'annulation */}
                         <div className="flex justify-end mt-4">
                             <button
                                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
@@ -238,6 +400,131 @@ function CompanyOrder() {
                     </div>
                 </div>
             )}
+            {/*Add order modal*/}
+            {modalAdd && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-8 rounded-lg max-h-full overflow-auto">
+                        <h2 className="text-lg font-bold mb-4">Ajouter un achat</h2>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Fournisseur</label>
+                            <select
+                                required
+                                value={selectedSupplier}
+                                onChange={(e) => setSelectedSupplier(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            >
+                                <option value="">Sélectionner un fournisseur</option>
+                                {suppliers.map(supplier => (
+                                    <option key={supplier.id} value={supplier.id}>
+                                        {supplier.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date</label>
+                            <input
+                                required
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date de livraison prévue</label>
+                            <input
+                                required
+                                type="date"
+                                value={plannedDeliveryDate}
+                                onChange={(e) => setPlannedDeliveryDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700">Date de livraison réelle</label>
+                            <input
+                                required
+                                type="date"
+                                value={actualDeliveryDate}
+                                onChange={(e) => setActualDeliveryDate(e.target.value)}
+                                className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                            />
+                        </div>
+                        {pieceInputs.map((piece, index) => (
+                            <div key={index} className="grid grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Pièce</label>
+                                    <select
+                                        required
+                                        value={piece.id_piece}
+                                        onChange={(e) => handlePieceChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    >
+                                        <option value="">Sélectionner une pièce</option>
+                                        {pieces.map(piece => (
+                                            <option key={piece.id} value={piece.id}>
+                                                {piece.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Quantité</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        value={piece.quantity}
+                                        onChange={(e) => handleQuantityChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Prix</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        value={piece.price}
+                                        onChange={(e) => handlePriceChange(e, index)}
+                                        className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
+                                    />
+                                </div>
+                                <div>
+                                {index > 0 && (
+                                    <button
+                                        className="mt-2 bg-red-300 hover:bg-red-400 text-red-800 font-bold py-2 px-4 rounded"
+                                        onClick={() => removePieceInput(index)}
+                                    >
+                                        <MdOutlineDelete className="h-5 w-5" />
+                                    </button>
+                                )}
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                            onClick={addPieceInput}
+                        >
+                            Ajouter une pièce
+                        </button>
+                        <div className="flex justify-end mt-4">
+                            <button
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                              onClick={closeAddModal}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                onClick={createCompanyOrder}
+                            >
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <ToastContainer />
         </div>
     );
 }
