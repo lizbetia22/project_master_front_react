@@ -4,8 +4,10 @@ import { GrDocumentCsv } from "react-icons/gr";
 import axios from "axios";
 import {toast, ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import {MdOutlineDelete} from "react-icons/md";
+import {MdDelete, MdOutlineDelete} from "react-icons/md";
 import { FaUserGear } from "react-icons/fa6";
+import Papa from 'papaparse';
+import {FaEdit} from "react-icons/fa";
 
 function CompanyOrder() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +29,7 @@ function CompanyOrder() {
     const [newSupplierName, setNewSupplierName] = useState("");
     const [newSupplierEmail, setNewSupplierEmail] = useState("");
     const API_URL = process.env.REACT_APP_API_URL;
+    const [selectedMonths, setSelectedMonths] = useState([]);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -73,9 +76,6 @@ function CompanyOrder() {
         fetchOrders();
     }, [API_URL]);
 
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-
     const processOrders = (data) => {
 
         if (!data || !Array.isArray(data)) {
@@ -100,7 +100,7 @@ function CompanyOrder() {
                     quantities: [],
                     prices: [],
                     planned_delivery_date: new Date(planned_delivery_date).toLocaleDateString('fr-CA'),
-                    actual_delivery_date: new Date(actual_delivery_date).toLocaleDateString('fr-CA'),
+                    actual_delivery_date: actual_delivery_date ? new Date(actual_delivery_date).toLocaleDateString('fr-CA') : null,
                 };
             }
 
@@ -148,7 +148,7 @@ function CompanyOrder() {
     };
 
     const createCompanyOrder = async () => {
-        if (!selectedSupplier || !selectedDate || !plannedDeliveryDate || !actualDeliveryDate) {
+        if (!selectedSupplier || !selectedDate || !plannedDeliveryDate) {
             toast.error('Tous les champs sont requis.');
             return;
         }
@@ -292,6 +292,120 @@ function CompanyOrder() {
             console.error('Error creating post:', error);
         }
     };
+    const handleMonthChange = (e) => {
+        const month = e.target.value;
+        setSelectedMonths(prevState =>
+            prevState.includes(month) ? prevState.filter(m => m !== month) : [...prevState, month]
+        );
+    };
+    const filterData = () => {
+        const selectedMonthIndices = selectedMonths.map(month => months.indexOf(month));
+        return companyOrders.filter(order => {
+            const orderDate = new Date(order.date);
+            const orderYear = orderDate.getFullYear();
+            const orderMonthIndex = orderDate.getMonth();
+            return selectedYear === orderYear && selectedMonthIndices.includes(orderMonthIndex);
+        });
+    };
+
+    const generateCSV = () => {
+        const filteredData = filterData();
+
+        if (filteredData.length === 0) {
+           toast.error('Pas de data')
+            return '';
+        }
+
+        const calculateTotal = (quantities, prices) => {
+            if (!quantities || !prices || quantities.length !== prices.length) return 'N/A';
+            let total = 0;
+            for (let i = 0; i < quantities.length; i++) {
+                total += parseFloat(quantities[i]) * parseFloat(prices[i]);
+            }
+            return total.toFixed(2); // Format to 2 decimal places
+        };
+
+        const csvData = filteredData.map(order => {
+            const pieces = Array.isArray(order.pieces) ? order.pieces.join('; ') : order.pieces || 'N/A';
+            const quantities = Array.isArray(order.quantities) ? order.quantities.join('; ') : order.quantities || 'N/A';
+            const prices = Array.isArray(order.prices) ? order.prices.join('; ') : order.prices || 'N/A';
+
+            return {
+                'Order ID': order.id,
+                'Order Date': new Date(order.date).toLocaleDateString('fr-CA'),
+                'Supplier Name': order.user || 'N/A',
+                'Pieces': pieces,
+                'Quantities': quantities,
+                'Prices': prices,
+                'Total': calculateTotal(order.quantities, order.prices) + ' euro',
+                'Planned Delivery Date': new Date(order.planned_delivery_date).toLocaleDateString('fr-CA') || 'N/A',
+                'Actual Delivery Date': new Date(order.actual_delivery_date).toLocaleDateString('fr-CA') || 'N/A'
+            };
+        });
+
+        const totalSum = filteredData.reduce((sum, order) => {
+            return sum + parseFloat(calculateTotal(order.quantities, order.prices));
+        }, 0).toFixed(2);
+
+        const headers = [
+            'Order ID',
+            'Order Date',
+            'Supplier Name',
+            'Pieces',
+            'Quantities',
+            'Prices',
+            'Total',
+            'Planned Delivery Date',
+            'Actual Delivery Date'
+        ];
+
+        const csvContent = Papa.unparse({
+            fields: headers,
+            data: csvData
+        });
+
+        const csvWithTotal = `${csvContent}\nTOTAL,,,,,,,,${totalSum} euro`;
+
+        return csvWithTotal;
+    };
+
+
+    const downloadCSV = () => {
+        const csv = generateCSV();
+        if (!csv) return;
+        const monthString = Array.isArray(selectedMonths)
+            ? selectedMonths.join('_')
+            : selectedMonths || 'AllMonths';
+        const filename = `orders_${selectedYear}_${monthString}.csv`;
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setSelectedMonths([]);
+    };
+
+    const updateOrder = async (id) => {
+        try {
+            const response = await axios.get(`${API_URL}/company-order-piece/update/${id}`,{
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+         toast.success('')
+        } catch (error) {
+            toast.error('')
+            console.error("Error fetching orders:", error);
+        }
+    };
+
+
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
@@ -356,6 +470,7 @@ function CompanyOrder() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prix</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date de livrasion prévu</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date de livrasion réelle</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -396,7 +511,25 @@ function CompanyOrder() {
                                 </ul>
                             </td>
                             <td className="px-8 py-4 whitespace-nowrap">{row.planned_delivery_date}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{row.actual_delivery_date}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                {row.actual_delivery_date ? row.actual_delivery_date : 'Les achats ne sont pas encore livrés'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                {!row.actual_delivery_date && (
+                                    <div>
+                                        <button
+                                            type="button"
+                                            className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2">
+                                            <FaEdit className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2">
+                                            <MdDelete className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                )}
+                            </td>
                         </tr>
                     )) : (
                         <tr>
@@ -458,7 +591,12 @@ function CompanyOrder() {
                         <div className="grid grid-cols-3 gap-4 mb-4">
                             {months.map((month, index) => (
                                 <label key={index} className="flex items-center space-x-2">
-                                    <input type="checkbox" className="form-checkbox h-6 w-6" />
+                                    <input
+                                        type="checkbox"
+                                        value={month}
+                                        onChange={handleMonthChange}
+                                        className="form-checkbox h-6 w-6"
+                                    />
                                     <span>{month}</span>
                                 </label>
                             ))}
@@ -470,7 +608,13 @@ function CompanyOrder() {
                             >
                                 Annuler
                             </button>
-                            <button className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                            <button
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                                onClick={() => {
+                                    downloadCSV();
+                                    setModalOpen(false);  // Optionally close the modal
+                                }}
+                            >
                                 Valider
                             </button>
                         </div>
