@@ -5,12 +5,14 @@ import axios from "axios";
 import {toast, ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import {MdOutlineDelete} from "react-icons/md";
+import { FaUserGear } from "react-icons/fa6";
 
 function CompanyOrder() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterBy, setFilterBy] = useState('id');
     const [currentPage, setCurrentPage] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
+    const [modalSupplier, setModalSupplier] = useState(false);
     const [modalAdd, setModalAdd] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
@@ -22,6 +24,8 @@ function CompanyOrder() {
     const [pieces, setPieces] = useState([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const achatsPerPage = 4;
+    const [newSupplierName, setNewSupplierName] = useState("");
+    const [newSupplierEmail, setNewSupplierEmail] = useState("");
     const API_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
@@ -84,12 +88,14 @@ function CompanyOrder() {
             const { id_order, Company_order, Piece, quantity, price } = item;
             const { date, planned_delivery_date, actual_delivery_date, Supplier } = Company_order;
             const supplier = Supplier.name;
+            const email = Supplier.email;
 
             if (!ordersMap[id_order]) {
                 ordersMap[id_order] = {
                     id: id_order,
                     date: new Date(date).toLocaleDateString('fr-CA'),
                     user: supplier,
+                    email: email,
                     pieces: [],
                     quantities: [],
                     prices: [],
@@ -235,19 +241,77 @@ function CompanyOrder() {
         });
     };
 
+    const fetchSuppliers = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/supplier/all`,  {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            setSuppliers(response.data);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    const handleCreateSupplierClose = () => {
+        setModalSupplier(false);
+    };
+
+    const handleCreateSupplierOpen = () => {
+        setModalSupplier(true);
+    };
+    const handleCreateSupplier = async () => {
+        if (!newSupplierName.trim()) {
+            toast.error('Le nom de fournisseur est requis.');
+            return;
+        }
+
+        if (!newSupplierEmail.trim()) {
+            toast.error('Le email de fournisseur est requis.');
+            return;
+        }
+        try {
+            const requestBody = {
+                name: newSupplierName,
+                email:newSupplierEmail
+            };
+            await axios.post(`${API_URL}/supplier/create`, requestBody,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            setModalSupplier(false);
+            setNewSupplierName("")
+            setNewSupplierEmail("");
+            await fetchSuppliers();
+            toast.success('Fournisseur créé avec succès!');
+        } catch (error) {
+            toast.error('Erreur lors de la création de fournisseur.');
+            console.error('Error creating post:', error);
+        }
+    };
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
             <div className="flex justify-center">
                 <h1 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-3xl dark:text-gray-900">Liste des achats</h1>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-5">
                 <button
                     className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
                     onClick={() => setModalAdd(true)}
                 >
                     <span className="mr-1">Ajouter un achat</span>
                     <BiPurchaseTag className="h-5 w-5" />
+                </button>
+                <button
+                    className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
+                    onClick={handleCreateSupplierOpen}
+                >
+                    <span className="mr-1">Ajouter un fournisseur</span>
+                    <FaUserGear className="h-5 w-5" />
                 </button>
                 <button
                     className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
@@ -299,7 +363,17 @@ function CompanyOrder() {
                         <tr key={index}>
                             <td className="px-6 py-4 whitespace-nowrap">{row.id}</td>
                             <td className="px-12 py-4 whitespace-nowrap">{row.date}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{row.user}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                                <ul>
+                                    <li>
+                                        {row.user}
+                                    </li>
+                                    <li>
+                                        {row.email}
+                                    </li>
+                                </ul>
+
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <ul>
                                     {row.pieces.map((piece, i) => (
@@ -523,6 +597,64 @@ function CompanyOrder() {
                             >
                                 Enregistrer
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/*Add supplier modal*/}
+            {modalSupplier && (
+                <div className="fixed z-10 inset-0 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 transition-opacity">
+                            <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                        </div>
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                {/* Modal content */}
+                                <div className="sm:flex sm:items-center">
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900">Créer un fournisseur</h3>
+                                        <div className="mt-2">
+                                            {/* Inputs for creating a machine */}
+                                            <label htmlFor="name" className="mt-2 block text-sm font-medium text-gray-700">Nom</label>
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="Nom"
+                                                id="name"
+                                                onChange={(e) => setNewSupplierName(e.target.value)}
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                            <label htmlFor="email" className="mt-2 block text-sm font-medium text-gray-700">Email</label>
+                                            <input
+                                                required
+                                                type="email"
+                                                placeholder="Email"
+                                                id="email"
+                                                onChange={(e) => setNewSupplierEmail(e.target.value)}
+                                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full max-w-md mx-auto shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                    <button
+                                        onClick={handleCreateSupplier}
+                                        type="button"
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Enregistrer
+                                    </button>
+                                    <button
+                                        onClick={handleCreateSupplierClose}
+                                        type="button"
+                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

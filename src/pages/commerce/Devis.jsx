@@ -187,6 +187,16 @@ function Devis() {
 
 
     const createDevis = async () => {
+        if (!newDevis.id_client || !newDevis.date || !newDevis.deadline) {
+            toast.error('Tous les champs sont requis.');
+            return;
+        }
+
+        const emptyPiece = newDevis.pieces.some(piece => !piece.piece || !piece.quantity || !piece.price);
+        if (emptyPiece) {
+            toast.error('Tous les champs de la pièce sont requis.');
+            return;
+        }
         const preparedDevis = {
             ...newDevis,
             pieces: newDevis.pieces.map(piece => ({
@@ -233,7 +243,7 @@ function Devis() {
         });
         const orderData = {
             id_client: idClient.id_client,
-            date_order: new Date().toISOString(),  // Use ISO date format
+            date_order: new Date().toISOString(),
             pieces: selectedPiecesData
         };
 
@@ -328,6 +338,10 @@ function Devis() {
     };
 
     const handleCreateClient = async () => {
+        if (!newClientName.trim()) {
+            toast.error('Le nom du client est requis.');
+            return;
+        }
         try {
             const requestBody = {
                 name: newClientName
@@ -350,13 +364,23 @@ function Devis() {
     const handleUpdateDevisSubmit = async (e) => {
         e.preventDefault();
 
+        if (!selectedDevis.id_client || !selectedDevis.date) {
+            toast.error('Tous les champs sont requis.');
+            return;
+        }
+
+        const emptyPiece = selectedDevis.pieces.some(piece => !piece.piece || !piece.quantity || !piece.price);
+        if (emptyPiece) {
+            toast.error('Tous les champs  de la pièece sont requis.');
+            return;
+        }
+
         const updatedPieces = selectedDevis.pieces.map(piece => ({
             ...piece,
             price: parseFloat(piece.price),
         }));
         const deadline = selectedDevis.deadline === "pas de deadline" ? null : selectedDevis.deadline;
 
-        // Prepare the request body
         const requestBody = {
             id_client: selectedDevis.id_client,
             date: selectedDevis.date,
