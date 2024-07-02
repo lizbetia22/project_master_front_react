@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import axios from 'axios';
 import DeleteConfirmationModalGamme from "../../components/modal/gamme/GammeDeleteModal";
 import UpdateGammeModal from "../../components/modal/gamme/GammeUpdateModal";
+import {toast, ToastContainer} from "react-toastify";
 
 function Gamme() {
     const [showModal, setShowModal] = useState(false);
@@ -75,8 +76,10 @@ function Gamme() {
                     }
                 });
             setGammesData(response.data);
+            toast.success('Gamme a été supprimé avec success')
             setDeleteModal(false);
         } catch (error) {
+            toast.error('Gamme ne peut pas être supprimé car il existe des enregistrements liés')
             console.error("Error deleting piece:", error);
         }
     };
@@ -270,6 +273,7 @@ function Gamme() {
                 setShowModalUpdate={setUpdateModal}
                 gammeId={modalGammeId}
             />
+            <ToastContainer />
         </>
     );
 }

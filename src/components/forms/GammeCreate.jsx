@@ -3,6 +3,7 @@ import { MdDeleteForever } from "react-icons/md";
 import { LuCalendarRange } from "react-icons/lu";
 import { IoMdSave } from "react-icons/io";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
 
 function GammeCreate() {
     const [name, setName] = useState('');
@@ -15,8 +16,6 @@ function GammeCreate() {
     const [responsable, setResponsable] = useState('');
     const [components, setComponents] = useState([{ id: 1, name: '', post: '', machine: '', time: '' }]);
     const [operations, setOperations] = useState([{ id: 1, operation: '' }]);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
     const [savedOperations, setSavedOperations] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
     const [selectedPost, setSelectedPost] = useState('');
@@ -101,6 +100,12 @@ function GammeCreate() {
         const comp = components[index];
         const post = posts.find((p) => p.Post.name === selectedPost);
         const machineObj = machines.find((m) => m.name === comp.machine);
+
+        if (!post || !machineObj || !comp.name || !comp.time) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
+
         const operationData = {
             id_post: post.Post.id,
             id_machine: machineObj.id,
@@ -110,7 +115,6 @@ function GammeCreate() {
 
         try {
             const response = await axios.post(`${API_URL}/operation/create`, operationData);
-            setSuccessMessage('Operation created successfully!');
             setSavedOperations([...savedOperations, response.data]);
             handleRemoveComponent(index);
             const responseOperations = await axios.get(`${API_URL}/operation/all`,
@@ -120,21 +124,23 @@ function GammeCreate() {
                     }
                 });
             setOperation(responseOperations.data);
-            setTimeout(() => {
-                setSuccessMessage('');
-            }, 5000);
-
+            toast.success("Operation a été créée avec succès");
         } catch (error) {
+            toast.error("Erreur lors de la creation d'operation");
             console.error('Error creating operation:', error);
-            setErrorMessage('Failed to create operation.');
 
-            setTimeout(() => {
-                setErrorMessage('');
-            }, 5000);
+
         }
     };
 
     const createGamme = async () => {
+
+        if (!piece || !responsable || !name) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
+
+
         const gammeData = {
             id_piece: pieces.find(p => p.name === piece).id,
             id_user: responsable,
@@ -151,24 +157,15 @@ function GammeCreate() {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-            setSuccessMessage('Gamme created successfully!');
+            toast.success("Gamme a été créée avec success")
             setName('');
             setPiece('');
             setResponsable('');
             setOperations([{ id: 1, operation: '' }]);
-            setTimeout(() => {
-                setSuccessMessage('');
-            }, 5000);
 
         } catch (error) {
+            toast.error("Erreur lors de la creation d'une gamme")
             console.error('Error creating gamme:', error);
-            if (error.response) {
-                console.error('Server response:', error.response.data);
-            }
-            setErrorMessage('Failed to create gamme.');
-            setTimeout(() => {
-                setErrorMessage('');
-            }, 5000);
         }
 };
 
@@ -224,18 +221,6 @@ function GammeCreate() {
                             Remplissez le formulaire ci-dessous pour ajouter une nouvelle gamme
                         </h1>
                     </div>
-
-                    {/* Success and Error Alerts */}
-                    {successMessage && (
-                        <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
-                            <span className="font-medium"></span> {successMessage}
-                        </div>
-                    )}
-                    {errorMessage && (
-                        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                            <span className="font-medium"></span> {errorMessage}
-                        </div>
-                    )}
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -400,6 +385,7 @@ function GammeCreate() {
                     </form>
                 </div>
             </div>
+            <ToastContainer />
         </>
     );
 }

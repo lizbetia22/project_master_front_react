@@ -6,6 +6,7 @@ import { FaTools } from "react-icons/fa";
 import PieceDetailModal from "../../components/modal/piece/PieceDetailModal";
 import DeleteConfirmationModal from "../../components/modal/piece/PieceDeleteModal";
 import UpdatePieceModal from "../../components/modal/piece/PieceUpdateModal";
+import {toast, ToastContainer} from "react-toastify";
 
 function Pieces() {
     const [showModal, setShowModal] = useState(false);
@@ -73,8 +74,10 @@ function Pieces() {
                     }
                 });
             setPieces(response.data);
+            toast.success("Pièce a été supprimé avec succès");
             setDeleteModal(false);
         } catch (error) {
+            toast.error("Pièce ne peut pas être supprimé car il existe des enregistrements liés");
             console.error("Error deleting piece:", error);
         }
     };
@@ -103,6 +106,7 @@ function Pieces() {
         setSelectedPieceId(pieceId);
         setUpdateModal(true);
     };
+
 
     return (
         <>
@@ -214,6 +218,7 @@ function Pieces() {
                 pieceId={selectedPieceId}
                 API_URL={API_URL}
             />
+            <ToastContainer />
         </>
     );
 }

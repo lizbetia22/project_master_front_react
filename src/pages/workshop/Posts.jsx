@@ -4,6 +4,7 @@ import { FaEdit } from "react-icons/fa";
 import { GrUserWorker } from "react-icons/gr";
 import DeletePostModal from "../../components/modal/responsible/PostDeleteModal";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
 
 const PostManagement = () => {
     const [posts, setPosts] = useState([]);
@@ -85,6 +86,10 @@ const PostManagement = () => {
     };
 
     const handleCreatePoste = async () => {
+        if (!newPostName) {
+            toast.error("Champs est requis.");
+            return;
+        }
         try {
             const requestBody = {
                 name: newPostName
@@ -95,15 +100,21 @@ const PostManagement = () => {
                             Authorization: `Bearer ${localStorage.getItem('token')}`
                         }
                     });
+                toast.success("Post créée avec success")
                 setShowCreateModal(false);
                 setNewPostName("")
                 fetchPosts();
         } catch (error) {
+            toast.error("Erreur lors de la creation d'une post")
             console.error('Error creating post:', error);
         }
     };
 
     const handleUpdatePoste = async (id) => {
+        if (!editPost.name) {
+            toast.error("Champs est requis.");
+            return;
+        }
         try {
             const requestBody = {
                 name: editPost.name
@@ -114,9 +125,11 @@ const PostManagement = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Post modifié avec success")
             setShowEditModal(false);
             fetchPosts();
         } catch (error) {
+            toast.error("Erreur lors de la modification d'une post")
             console.error('Error updating post:', error);
         }
     };
@@ -129,8 +142,10 @@ const PostManagement = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Post supprimé avec success")
             fetchPosts();
         } catch (error) {
+            toast.error("Erreur lors de la suppresion d'une post")
             console.error('Error deleting post:', error);
         }
     };
@@ -330,6 +345,7 @@ const PostManagement = () => {
                     Suivant
                 </button>
             </div>
+            <ToastContainer />
         </>
     );
 };

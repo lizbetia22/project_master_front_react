@@ -4,6 +4,7 @@ import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaTools } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
 
 function PieceCreate() {
     const [name, setName] = useState('');
@@ -56,6 +57,7 @@ function PieceCreate() {
         if (Object.keys(newErrors).length === 0) {
             handleCreate();
         } else {
+            toast.error('Tout le champs sont requis')
             setErrors(newErrors);
         }
     };
@@ -92,8 +94,7 @@ function PieceCreate() {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
             });
-            setAlertMessage("Pièce créée avec succès !");
-            setAlertType("success");
+            toast.success("Pièce créée avec succès !");
             setName('');
             setType('');
             setPrice('');
@@ -101,10 +102,8 @@ function PieceCreate() {
             setErrors({});
         } catch (error) {
             console.error("Erreur lors de la création de la pièce:", error);
-            setAlertMessage("Une erreur est survenue lors de la création de la pièce.");
-            setAlertType("error");
+            toast.error("Une erreur est survenue lors de la création de la pièce.");
         }
-        // Set timeout to clear alert after 5 seconds
         setTimeout(() => {
             setAlertMessage('');
             setAlertType('');
@@ -258,6 +257,7 @@ function PieceCreate() {
                     </form>
                 </div>
             </div>
+            <ToastContainer />
         </>
     );
 }

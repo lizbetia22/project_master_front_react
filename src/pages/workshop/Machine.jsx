@@ -4,6 +4,7 @@ import { FaEdit } from "react-icons/fa";
 import { GiToolbox } from "react-icons/gi";
 import DeleteMachineModal from "../../components/modal/responsible/MachineDeleteModal";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
 
 const Machine = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -108,6 +109,10 @@ const Machine = () => {
     };
 
     const handleCreateMachine = async () => {
+        if (!newMachineName || !newPostId) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
         try {
             const requestBody = {
                 name: newMachineName,
@@ -120,16 +125,22 @@ const Machine = () => {
                     }
                 });
             setShowCreateModal(false);
+            toast.success("Machine a été créée avec success")
             setNewMachineName("");
             setNewPostId("");
             fetchMachines();
         } catch (error) {
+            toast.error("Erreur lors de la creation d'une machine")
             console.error('Error creating machine:', error);
         }
     };
 
 
     const handleUpdateMachine = async () => {
+        if (!editMachine.competences || !editMachine.nom) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
         try {
             const requestBody = {
                 id_post: editMachine.competences,
@@ -141,9 +152,11 @@ const Machine = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Machine a été modifié avec success")
             setShowEditModal(false);
             fetchMachines();
         } catch (error) {
+            toast.error("Erreur lors de la modification d'une machine")
             console.error('Error updating machine:', error);
         }
     };
@@ -157,8 +170,10 @@ const Machine = () => {
                     }
                 });
             setMachines(machines.filter(machine => machine.id !== id));
+            toast.success("Machine a été supprimé avec success")
             setShowDeleteModal(false);
         } catch (error) {
+            toast.error("Erreur lors de la suppresion d'une machine")
             console.error('Error deleting machine', error);
         }
     };
@@ -385,6 +400,7 @@ const Machine = () => {
                     Suivant
                 </button>
             </div>
+            <ToastContainer />
         </>
     );
 };

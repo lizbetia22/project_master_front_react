@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdDeleteForever } from "react-icons/md";
+import {toast} from "react-toastify";
 
 const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
     const [name, setName] = useState("");
@@ -13,11 +14,6 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
     const [componentQuantity, setComponentQuantity] = useState("");
     const [allPieces, setAllPieces] = useState([]);
 
-    const [errors, setErrors] = useState({
-        name: "",
-        type: "",
-        price: ""
-    });
 
     useEffect(() => {
         const fetchPieceDetails = async () => {
@@ -72,30 +68,10 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
         }
     }, [showModal, pieceId, API_URL]);
 
-    const validateInputs = () => {
-        const errors = {};
-        if (!name.trim()) {
-            errors.name = "Le nom ne peut pas être vide";
-        } else if (/[^a-zA-Z0-9\s]/.test(name)) {
-            errors.name = "Le nom ne peut pas contenir de symboles (*, /, !, etc.)";
-        }
-
-        if (!type.trim()) {
-            errors.type = "Le type ne peut pas être vide";
-        }
-
-        if (!price.trim()) {
-            errors.price = "Le prix ne peut pas être vide";
-        } else if (isNaN(price) || parseFloat(price) <= 0) {
-            errors.price = "Le prix doit être un nombre positif";
-        }
-
-        setErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
 
     const handleUpdatePiece = async () => {
-        if (!validateInputs()) {
+        if (!name || !type || !price || isNaN(parseFloat(price))) {
+            toast.error("Tous les champs sont requis");
             return;
         }
         try {
@@ -116,8 +92,10 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Pièce a été modifié avec success");
             setShowModal(false);
         } catch (error) {
+            toast.error("Erreur lors de la modification d'une pièce");
             console.error("Error updating piece:", error);
         }
     };
@@ -186,7 +164,6 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                                                 onChange={(e) => setName(e.target.value)}
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
-                                            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                                         </div>
                                         <div className="mt-2">
                                             <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type</label>
@@ -198,7 +175,6 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                                                 onChange={(e) => setType(e.target.value)}
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
-                                            {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
                                         </div>
                                         <div className="mt-2">
                                             <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
@@ -210,7 +186,6 @@ const UpdatePieceModal = ({ showModal, setShowModal, pieceId, API_URL }) => {
                                                 onChange={(e) => setPrice(e.target.value)}
                                                 className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             />
-                                            {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
                                         </div>
                                         <div className="mt-4">
                                             <h4 className="text-lg font-medium text-gray-900">Composants</h4>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { MdDeleteForever } from "react-icons/md";
+import {toast} from "react-toastify";
 
 const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
     const [name, setName] = useState("");
@@ -89,6 +90,10 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
     };
 
     const handleSubmit = async () => {
+        if (!piece || !responsable || !name) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
         const updatedGamme = {
             id_piece: piece || data.id_piece,
             id_user: responsable || data.id_user,
@@ -107,7 +112,9 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
                     }
                 });
             setShowModalUpdate(false);
+            toast.success("Gamme a été modifié avec success")
         } catch (error) {
+            toast.success("Erreur lors de la modification de gamme")
             console.error('Error updating gamme:', error);
         }
     };
@@ -152,7 +159,7 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
                                                 onChange={(e) => setResponsable(e.target.value)}
                                                 className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             >
-                                                <option value="">Sélectionner un responsable</option>
+                                                <option value="null">Sélectionner un responsable</option>
                                                 {users.map((user) => (
                                                     <option key={user.id} value={user.id}>
                                                         {user.name}

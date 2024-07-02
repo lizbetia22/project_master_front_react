@@ -4,6 +4,7 @@ import { FaEdit } from "react-icons/fa";
 import { BsFillFileEarmarkPostFill } from "react-icons/bs";
 import DeleteOperationModal from "../../components/modal/responsible/OperationDeleteModal";
 import axios from "axios";
+import {toast, ToastContainer} from "react-toastify";
 
 const Operations = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -17,6 +18,7 @@ const Operations = () => {
     const [operations, setOperations] = useState([]);
     const [posts, setPosts] = useState([]);
     const [machines, setMachines] = useState([]);
+    const [gammesData, setGammeData] = useState([]);
     const [filteredMachines, setFilteredMachines] = useState([]);
     const API_URL = process.env.REACT_APP_API_URL;
 
@@ -64,7 +66,15 @@ const Operations = () => {
                 console.error("Error fetching operations:", error);
             }
         };
-
+        const fetchGammeofOperation = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/gamme-operation/all`);
+                setGammeData(response.data);
+            } catch (error) {
+                console.error('Failed to get data of operations gamme:', error);
+            }
+        };
+        fetchGammeofOperation();
         fetchOperations();
     }, [API_URL, showCreateModal, showEditModal, showDeleteModal]);
 
@@ -115,6 +125,10 @@ const Operations = () => {
     };
 
     const handleCreateOperation = async () => {
+        if (!editOperation.id_post || !editOperation.id_machine || !editOperation.name || !editOperation.time) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
         try {
             const requestBody = {
                 id_post: editOperation.id_post,
@@ -128,13 +142,19 @@ const Operations = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Operation a été créée avec success")
             setShowCreateModal(false);
         } catch (error) {
+            toast.error("Erreur lors de creation d'une operation")
             console.error('Error creating operation:', error);
         }
     };
 
     const handleUpdateOperation = async () => {
+        if (!editOperation.id_post || !editOperation.id_machine || !editOperation.name || !editOperation.time) {
+            toast.error("Tous les champs sont requis.");
+            return;
+        }
         try {
             const requestBody = {
                 id_post: editOperation.id_post,
@@ -148,8 +168,10 @@ const Operations = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Operation a été modifié avec success")
             setShowEditModal(false);
         } catch (error) {
+            toast.error("Erreur lors de modification d'une operation")
             console.error('Error updating operation:', error);
         }
     };
@@ -162,8 +184,10 @@ const Operations = () => {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+            toast.success("Operation a été supprimé avec success")
             setShowDeleteModal(false);
         } catch (error) {
+            toast.error("Erreur lors de suppression d'une operation")
             console.error('Error deleting operation', error);
         }
     };
@@ -386,9 +410,14 @@ const Operations = () => {
                                 <button onClick={() => handleEditModalOpen(operation)} className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2">
                                     <FaEdit className="h-5 w-5" />
                                 </button>
-                                <button onClick={() => handleDeleteModalOpen(operation)} className="px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 ml-2">
-                                    <MdDelete className="h-5 w-5" />
-                                </button>
+                                {!gammesData.some(item => item.id_operation === operation.id) && (
+                                    <button
+                                        onClick={() => handleDeleteModalOpen(operation)}
+                                        className="px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2 ml-2"
+                                    >
+                                        <MdDelete className="h-5 w-5" />
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -422,6 +451,7 @@ const Operations = () => {
                 </button>
             </div>
         </div>
+            <ToastContainer />
         </>
     );
 };
