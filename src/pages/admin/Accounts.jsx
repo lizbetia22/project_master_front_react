@@ -1,8 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdOutlineManageAccounts } from "react-icons/md";
 import { FiEdit } from "react-icons/fi";
 import { RiDeleteBinLine } from "react-icons/ri";
-import axios from "axios";
+import { MdClose } from "react-icons/md";
+import {MdDelete} from "react-icons/md";
+import axios from 'axios';
+import { toast, ToastContainer } from "react-toastify";
 
 function Admin() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +13,16 @@ function Admin() {
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
     const [users, setUsers] = useState([]);
+    const [posts, setPosts] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        posts: [''],
+        role: ''
+    });
     const API_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
@@ -17,16 +30,44 @@ function Admin() {
             try {
                 const response = await axios.get(`${API_URL}/user/all`, {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
                 });
-                setUsers(response.data); // Set the fetched data to the users state
+                setUsers(response.data);
             } catch (error) {
                 console.error("Error fetching users:", error);
             }
         };
 
+        const fetchPosts = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/post/all`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                setPosts(response.data);
+            } catch (error) {
+                console.error("Error fetching posts:", error);
+            }
+        };
+
+        const fetchRoles = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/role/all`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                setRoles(response.data);
+            } catch (error) {
+                console.error("Error fetching posts:", error);
+            }
+        };
+
         fetchData();
+        fetchPosts();
+        fetchRoles();
     }, [API_URL]);
 
     const paginate = (array, page_size, page_number) => {
@@ -42,6 +83,83 @@ function Admin() {
 
     const paginatedFilteredData = paginate(filteredData, usersPerPage, currentPage);
 
+    const openModal = (user) => {
+        setSelectedUser(user);
+        setFormData({
+            name: user.name,
+            email: user.email,
+            posts: user.User_posts.map(post => post.Post.name),
+            role: user.Role.name,
+            password: null
+        });
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedUser(null);
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handlePostChange = (index, value) => {
+        const updatedPosts = [...formData.posts];
+        updatedPosts[index] = value;
+        setFormData({ ...formData, posts: updatedPosts });
+    };
+
+    const handleAddPost = () => {
+        setFormData({ ...formData, posts: [...formData.posts, ''] });
+    };
+
+    const handleRemovePost = (index) => {
+        setFormData({ ...formData, posts: formData.posts.filter((_, i) => i !== index) });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`${API_URL}/user/${selectedUser.id}`, {
+                name: formData.name,
+                email: formData.email,
+                User_posts: formData.posts.map(post => ({ Post: { name: post } })),
+                Role: { name: formData.role }
+            }, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            closeModal();
+            const response = await axios.get(`${API_URL}/user/all`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
+    };
+
+    const handleUpdateUser = async (id) => {
+        const requestBody= {
+
+        }
+        try {
+            await axios.put(`${API_URL}/user/update/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+           toast.success("Utilisater été modifié avec success")
+        } catch (error) {
+            toast.success("Erreur de la odification d'utilisateur")
+            console.error("Error updating user:", error);
+        }
+    }
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
@@ -81,7 +199,7 @@ function Admin() {
                     <thead className="bg-gray-50 dark:bg-gray-300">
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Nom</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Post</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
@@ -102,19 +220,23 @@ function Admin() {
                                         ))}
                                     </ul>
                                 ) : (
-                                    <span>{row.Role.name}</span>
+                                    <span>-</span>
                                 )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">{row.Role.name}</td>
                             <td className="px-1 py-4 whitespace-nowrap">
                                 <button
-                                        className="hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                                    className="hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded"
+                                    onClick={() => openModal(row)}
+                                >
                                     <FiEdit className="w-6 h-6"/>
                                 </button>
-                                <button
-                                    className="ml-3 hover:bg-red-300 text-gray-700 font-bold py-2 px-4 rounded">
-                                    <RiDeleteBinLine className="w-6 h-6"/>
-                                </button>
+                                {row.Role.name !== 'Admin' && (
+                                    <button
+                                        className="ml-3 hover:bg-red-300 text-gray-700 font-bold py-2 px-4 rounded">
+                                        <RiDeleteBinLine className="w-6 h-6"/>
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -135,9 +257,7 @@ function Admin() {
                         <button
                             key={index}
                             onClick={() => handlePageChange(index + 1)}
-                            className={`bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 ${
-                                currentPage === index + 1 ? "" : "rounded-l"
-                            }`}
+                            className={`bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 ${currentPage === index + 1 ? "bg-gray-400" : "rounded-l"}`}
                         >
                             {index + 1}
                         </button>
@@ -151,6 +271,133 @@ function Admin() {
                     Suivant
                 </button>
             </div>
+            {/* Modal edit user */}
+            {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
+                    <div className="relative bg-white p-8 rounded-lg w-1/2 max-h-screen overflow-auto">
+                        {/* Close Button */}
+                        <button
+                            className="absolute top-2 right-2 text-gray-500"
+                            onClick={closeModal}
+                        >
+                            <MdClose className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-xl font-bold mb-4">Modifier utilisateur</h2>
+                        <form onSubmit={handleSubmit}>
+                            {/* Name Input */}
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Name</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className="mt-1 p-2 border border-gray-400 rounded-md w-full"
+                                    required
+                                />
+                            </div>
+
+                            {/* Email Input */}
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="mt-1 p-2 border border-gray-400 rounded-md w-full"
+                                    required
+                                />
+                            </div>
+
+                            {/* Password Input */}
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Mot de pass</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className="mt-1 p-2 border border-gray-400 rounded-md w-full"
+                                    required
+                                />
+                            </div>
+
+                            {/* Posts Section (Only for 'Workshop' Role) */}
+                            {formData.role === 'Workshop' && (
+                                <div className="mb-4">
+                                    <label className="block text-gray-700">Posts</label>
+                                    {formData.posts.map((post, index) => (
+                                        <div key={index} className="flex items-center mb-2">
+                                            <select
+                                                value={post}
+                                                onChange={(e) => handlePostChange(index, e.target.value)}
+                                                className="p-2 border border-gray-400 rounded-md w-full"
+                                            >
+                                                <option value="">Select a post</option>
+                                                {posts.map((p) => (
+                                                    <option key={p.id} value={p.name}>
+                                                        {p.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemovePost(index)}
+                                                className="ml-5 px-4 py-2 border border-gray-400 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 mt-2"
+                                            >
+                                                <MdDelete className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={handleAddPost}
+                                        className="bg-gray-800 hover:bg-gray-400 text-gray-200 py-2 px-4 rounded"
+                                    >
+                                        Ajouter un post
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Role Input */}
+                            <div className="mb-4">
+                                <label className="block text-gray-700">Role</label>
+                                <select
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleChange}
+                                    className="mt-1 p-2 border border-gray-400 rounded-md w-full"
+                                >
+                                    <option value="">Select a role</option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.name}>
+                                            {role.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    className="bg-gray-800 hover:bg-gray-400 text-gray-200 py-2 px-4 rounded"
+                                    onClick={handleUpdateUser}
+                                >
+                                    Enregistrer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded ml-5"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            <ToastContainer />
         </div>
     );
 }

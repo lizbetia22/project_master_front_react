@@ -369,7 +369,8 @@ function Devis() {
             return;
         }
 
-        const emptyPiece = selectedDevis.pieces.some(piece => !piece.piece || !piece.quantity || !piece.price);
+        const emptyPiece = selectedDevis.pieces.some(piece => !piece.id_piece || !piece.quantity || !piece.price);
+        console.log(selectedDevis)
         if (emptyPiece) {
             toast.error('Tous les champs  de la pièece sont requis.');
             return;

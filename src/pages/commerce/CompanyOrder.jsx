@@ -79,6 +79,19 @@ function CompanyOrder() {
         fetchOrders();
     }, [API_URL]);
 
+    const handleOPenCsvModal = () => {
+        setModalOpen(true)
+        const getPreviousMonth = () => {
+            const now = new Date();
+            const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1);
+            return previousMonth.toLocaleString('default', { month: 'long' }).toLowerCase();
+        };
+
+        const previousMonth = getPreviousMonth();
+        setSelectedMonths([previousMonth]);
+    }
+
+
     const processOrders = (data) => {
 
         if (!data || !Array.isArray(data)) {
@@ -173,8 +186,8 @@ function CompanyOrder() {
     const paginatedFilteredData = paginate(filteredData, achatsPerPage, currentPage);
 
     const months = [
-        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet",
-        "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        "janvier", "février", "mars", "avril", "mai", "juin", "juillet",
+        "août", "septembre", "octobre", "novembre", "décembre"
     ];
 
     const fetchOrders = async () => {
@@ -519,7 +532,7 @@ function CompanyOrder() {
                 </button>
                 <button
                     className="mb-7 flex items-center bg-gray-900 text-white py-2 px-4 rounded-md mr-2"
-                    onClick={() => setModalOpen(true)}
+                    onClick={handleOPenCsvModal}
                 >
                     <span className="mr-1">Télécharger des achats</span>
                     <GrDocumentCsv className="h-5 w-5" />
@@ -687,6 +700,7 @@ function CompanyOrder() {
                                         type="checkbox"
                                         value={month}
                                         onChange={handleMonthChange}
+                                        checked={selectedMonths.includes(month)}
                                         className="form-checkbox h-6 w-6"
                                     />
                                     <span>{month}</span>
