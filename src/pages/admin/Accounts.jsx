@@ -90,8 +90,8 @@ function Admin() {
             email: user.email,
             posts: user.User_posts.map(post => post.Post.name),
             role: user.Role.name,
-            password: null
-        });
+            password: ''
+    });
         setIsModalOpen(true);
     };
 
@@ -144,22 +144,87 @@ function Admin() {
         }
     };
 
-    const handleUpdateUser = async (id) => {
-        const requestBody= {
+    const getRoleId = (roleName) => {
+        const role = roles.find(role => role.name === roleName);
+        return role ? role.id : null;
+    };
 
+    const getPostIds = (postNames) => {
+        return postNames.map(postName => {
+            const post = posts.find(post => post.name === postName);
+            return post ? post.id : null;
+        });
+    };
+
+
+    const handleUpdateUser = async () => {
+
+        if (!formData.name || !formData.email || !formData.password || !formData.role ) {
+            toast.error("Tous les champs sont requis.");
+            return;
         }
+
+        const roleId = getRoleId(formData.role);
+        const postIds = getPostIds(formData.posts);
+
+        const requestBody = {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            id_role: roleId,
+            posts: postIds.filter(id => id !== null)
+        };
+        console.log(JSON.stringify(requestBody) + 'body')
+
         try {
-            await axios.put(`${API_URL}/user/update/${id}`, {
+            await axios.put(`${API_URL}/user/update/${selectedUser.id}`, requestBody, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            toast.success("Utilisateur a été modifié avec succès");
+            closeModal();
+            const response = await axios.get(`${API_URL}/user/all`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-           toast.success("Utilisater été modifié avec success")
+            setUsers(response.data);
         } catch (error) {
-            toast.success("Erreur de la odification d'utilisateur")
+            toast.error("Erreur de la modification d'utilisateur");
             console.error("Error updating user:", error);
         }
-    }
+    };
+
+    const handleCreateUser = async () => {
+
+        const requestBody = {
+
+        };
+        console.log(JSON.stringify(requestBody) + 'body')
+
+        try {
+            await axios.put(`${API_URL}/user/create-user`, requestBody, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            toast.success("Utilisateur a été créé avec succès");
+            closeModal();
+            const response = await axios.get(`${API_URL}/user/all`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            setUsers(response.data);
+        } catch (error) {
+            toast.error("Erreur de la creation d'utilisateur");
+            console.error("Error creating user:", error);
+        }
+    };
+
 
     return (
         <div className="w-full max-w-full mx-auto py-8 px-4 md:px-6 h-full overflow-auto">
@@ -312,7 +377,7 @@ function Admin() {
 
                             {/* Password Input */}
                             <div className="mb-4">
-                                <label className="block text-gray-700">Mot de pass</label>
+                                <label className="block text-gray-700">Mot de passe</label>
                                 <input
                                     type="password"
                                     name="password"
