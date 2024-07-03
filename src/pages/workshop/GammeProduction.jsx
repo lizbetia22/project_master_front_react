@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { FaRegSave } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
 
 function GammeProduction() {
     const { gammeId } = useParams();
@@ -11,11 +12,9 @@ function GammeProduction() {
     const [posts, setPosts] = useState([]);
     const [machines, setMachines] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const operationsPerPage = 3;
-    const [successAlert, setSuccessAlert] = useState(false);
-    const [errorAlert, setErrorAlert] = useState(false);
+    const operationsPerPage = 10;
     const [selectedPost, setSelectedPost] = useState('');
-    const [filteredMachines, setFilteredMachines] = useState([]);
+    const [machineFilters, setMachineFilters] = useState({});
     const API_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
@@ -35,13 +34,19 @@ function GammeProduction() {
         if (selectedPost) {
             const post = posts.find(p => p.Post.name === selectedPost);
             if (post) {
-                const filtered = machines.filter(machine => machine.id_post === post.Post.id);
-                setFilteredMachines(filtered);
+                const filteredMachines = machines.filter(machine => machine.id_post === post.Post.id);
+                setMachineFilters(prevFilters => ({
+                    ...prevFilters,
+                    [selectedPost]: filteredMachines
+                }));
             } else {
-                setFilteredMachines([]);
+                setMachineFilters(prevFilters => ({
+                    ...prevFilters,
+                    [selectedPost]: []
+                }));
             }
         } else {
-            setFilteredMachines([]);
+            setMachineFilters({});
         }
     }, [selectedPost, posts, machines]);
 
@@ -51,8 +56,8 @@ function GammeProduction() {
             ...newOperations[index],
             post_name: value
         };
-        setSelectedPost(value)
         setOperations(newOperations);
+        setSelectedPost(value);
     };
 
     const handleMachineChange = (index, value) => {
@@ -63,6 +68,7 @@ function GammeProduction() {
         };
         setOperations(newOperations);
     };
+
     const handleTimeChange = (index, value) => {
         const newOperations = [...operations];
         newOperations[index] = {
@@ -140,16 +146,14 @@ function GammeProduction() {
                 const { id, post_name, machine_name, time } = operation;
 
                 const postId = posts.find(post => post.Post.name === post_name)?.id;
-                const machineId = machines.find(machine => machine.name === machine_name)?.id;
 
                 const payload = {
                     id_gamme_operation: id,
                     id_post: postId,
-                    id_machine: machineId,
+                    id_machine: machine_name.toString(),
                     name: operation.operation_name,
                     time: parseInt(time)
                 };
-
                 await axios.post(`${API_URL}/gamme-produce-operation/create`, payload,
                     {
                         headers: {
@@ -159,22 +163,14 @@ function GammeProduction() {
             });
 
             await Promise.all(requests);
-
-            setSuccessAlert(true);
-            setTimeout(() => {
-                setSuccessAlert(false);
-            }, 5000);
+            toast.success("Gamme production a été enregistrée avec succès");
         } catch (error) {
-            setErrorAlert(true);
-            setTimeout(() => {
-                setErrorAlert(false);
-            }, 5000);
+            toast.error("Erreur lors de l'enregistrement de la production de gamme");
             console.error("Error creating gamme production:", error);
         }
     };
 
-
-    useState(() => {
+    useEffect(() => {
         const fetchData = async () => {
             try {
                 await fetchDataAllPosts();
@@ -189,7 +185,6 @@ function GammeProduction() {
             fetchDataGamme(gammeId);
         }
         fetchData();
-
     }, [gammeId]);
 
     return (
@@ -217,20 +212,6 @@ function GammeProduction() {
                     </button>
                 </Link>
             </div>
-            {successAlert && (
-                <div className="flex justify-center">
-                    <div className="w-96 p-5 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
-                        Modifications ont été enregistrées avec succès.
-                    </div>
-                </div>
-            )}
-            {errorAlert && (
-                <div className="flex justify-center">
-                    <div className="w-96 p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                        Échec de la création de la production de gamme.
-                    </div>
-                </div>
-            )}
             <div className="container mx-auto py-8 px-4 md:px-6">
                 <div className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex justify-center">
                     {operations.length === 0 ? (
@@ -239,57 +220,57 @@ function GammeProduction() {
                         </div>
                     ) : (
                         currentOperations.map((operation, index) => (
-                        <div key={index} className="bg-white overflow-hidden shadow-md rounded-lg w-96">
-                            <div className="px-4 py-5 font-bold text-gray-800 text-xl">
-                                Opération {index + 1} : {operation.operation_name}
+                            <div key={index} className="bg-white overflow-hidden shadow-md rounded-lg w-96">
+                                <div className="px-4 py-5 font-bold text-gray-800 text-xl">
+                                    Opération {index + 1} : {operation.operation_name}
+                                </div>
+                                <div className="px-4 py-4 space-y-4">
+                                    <div>
+                                        <label htmlFor={`post-${index + 1}`} className="block text-sm font-medium text-gray-700">
+                                            Post
+                                        </label>
+                                        <select
+                                            value={operation.post_name}
+                                            onChange={(e) => handlePostChange(index, e.target.value)}
+                                            className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
+                                        >
+                                            <option value="">Sélectionnez un post</option>
+                                            {posts.map((post) => (
+                                                <option key={post.Post.id} value={post.Post.name}>
+                                                    {post.Post.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor={`machine-${index + 1}`} className="block text-sm font-medium text-gray-700">
+                                            Machine
+                                        </label>
+                                        <select
+                                            value={operation.machine_name}
+                                            onChange={(e) => handleMachineChange(index, e.target.value)}
+                                            className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
+                                        >
+                                            <option value="">Sélectionnez une machine</option>
+                                            {(machineFilters[operation.post_name] || []).map(machine => (
+                                                <option key={machine.id} value={machine.id}>{machine.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor={`time-${index + 1}`} className="block text-sm font-medium text-gray-700">
+                                            Temps requis
+                                        </label>
+                                        <input
+                                            value={operation.time}
+                                            id={`time-${index + 1}`}
+                                            type="number"
+                                            className="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-900"
+                                            onChange={(e) => handleTimeChange(index, e.target.value)}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="px-4 py-4 space-y-4">
-                                <div>
-                                    <label htmlFor={`post-${index + 1}`} className="block text-sm font-medium text-gray-700">
-                                        Post
-                                    </label>
-                                    <select
-                                        value={operation.post_name}
-                                        onChange={(e) => handlePostChange(index, e.target.value)}
-                                        className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
-                                    >
-                                        <option value="">Sélectionnez un post</option>
-                                        {posts.map((post) => (
-                                            <option key={post.Post.id} value={post.Post.name}>
-                                                {post.Post.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor={`machine-${index + 1}`} className="block text-sm font-medium text-gray-700">
-                                        Machine
-                                    </label>
-                                    <select
-                                        value={operation.machine_name}
-                                        onChange={(e) => handleMachineChange(index, e.target.value)}
-                                        className="mt-1 block w-full py-2 px-3 border border-gray-400 bg-white rounded-md shadow-sm sm:text-sm"
-                                    >
-                                        <option value="">Sélectionnez une machine</option>
-                                        {filteredMachines.map(machine => (
-                                            <option key={machine.id} value={machine.id}>{machine.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor={`time-${index + 1}`} className="block text-sm font-medium text-gray-700">
-                                        Temps requis
-                                    </label>
-                                    <input
-                                        value={operation.time}
-                                        id={`time-${index + 1}`}
-                                        type="number"
-                                        className="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:border-gray-900"
-                                        onChange={(e) => handleTimeChange(index, e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
                         ))
                     )}
                 </div>
@@ -328,6 +309,7 @@ function GammeProduction() {
                     </button>
                 </div>
             </div>
+            <ToastContainer />
         </>
     );
 }

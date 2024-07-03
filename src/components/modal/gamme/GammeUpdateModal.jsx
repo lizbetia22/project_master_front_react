@@ -90,7 +90,7 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
     };
 
     const handleSubmit = async () => {
-        if (!piece || !responsable || !name) {
+        if (!data.id_piece || !data.id_user || !data.name) {
             toast.error("Tous les champs sont requis.");
             return;
         }
@@ -159,7 +159,7 @@ const UpdateGammeModal = ({ updateModal, setShowModalUpdate, gammeId }) => {
                                                 onChange={(e) => setResponsable(e.target.value)}
                                                 className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-400 rounded-md py-2 px-3"
                                             >
-                                                <option value="null">Sélectionner un responsable</option>
+                                                <option value="">Sélectionner un responsable</option>
                                                 {users.map((user) => (
                                                     <option key={user.id} value={user.id}>
                                                         {user.name}
